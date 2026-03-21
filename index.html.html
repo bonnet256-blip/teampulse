@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<title>TeamPulse — Mon Équipe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0f0f0f;--ink2:#2a2a2a;--muted:#6b6b6b;--faint:#e8e4df;
+    --paper:#f5f1eb;--card:#ffffff;--accent:#c8452a;--accent2:#2a6bc8;
+    --gold:#c8a832;--green:#2a8c5a;--radius:14px;--shadow:0 2px 24px rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;padding-bottom:80px;}
+  header{background:var(--ink);color:white;padding:20px 24px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:16px;}
+  .logo{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-0.5px;flex:1;}
+  .logo span{color:var(--accent);font-style:italic;}
+  .sync-status{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);}
+  .sync-status.ok{background:rgba(42,140,90,0.3);color:#7eeaaa;}
+  .sync-status.err{background:rgba(200,69,42,0.3);color:#ffaaaa;}
+  .tabs{display:flex;background:var(--ink2);padding:0 16px;}
+  .tab{flex:1;text-align:center;padding:12px 8px;color:rgba(255,255,255,0.45);font-size:12px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+  .tab.active{color:white;border-bottom-color:var(--accent);}
+  .view{display:none;padding:20px 16px;}.view.active{display:block;}
+  .search-wrap{position:relative;margin-bottom:16px;}
+  .search-wrap input{width:100%;padding:12px 16px 12px 42px;border-radius:12px;border:1.5px solid var(--faint);background:var(--card);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s;}
+  .search-wrap input:focus{border-color:var(--accent);}
+  .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;}
+  .collab-grid{display:flex;flex-direction:column;gap:12px;}
+  .collab-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;border-left:4px solid transparent;display:flex;align-items:center;gap:14px;}
+  .collab-card:hover{transform:translateY(-2px);box-shadow:0 6px 32px rgba(0,0,0,0.12);}
+  .collab-card.priority-high{border-left-color:var(--accent);}
+  .collab-card.priority-mid{border-left-color:var(--gold);}
+  .collab-card.priority-ok{border-left-color:var(--green);}
+  .avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:20px;color:white;flex-shrink:0;}
+  .av-red{background:var(--accent);}.av-blue{background:var(--accent2);}.av-gold{background:var(--gold);}.av-green{background:var(--green);}.av-purple{background:#8c2ac8;}
+  .collab-info{flex:1;min-width:0;}
+  .collab-name{font-size:16px;font-weight:600;margin-bottom:2px;}
+  .collab-meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .collab-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500;flex-shrink:0;}
+  .badge-alert{background:#fdecea;color:var(--accent);}
+  .badge-ok{background:#e8f5ee;color:var(--green);}
+  .badge-soon{background:#fef9e7;color:var(--gold);}
+  #detail-view{display:none;}
+  #detail-view.active{display:block;}
+  .detail-header{background:var(--ink);color:white;padding:20px 16px 24px;}
+  .back-btn{background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;}
+  .detail-name{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:4px;}
+  .detail-sub{font-size:14px;color:rgba(255,255,255,0.6);}
+  .section-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 0 10px;}
+  .info-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .chip{background:var(--card);border:1.5px solid var(--faint);border-radius:20px;padding:6px 14px;font-size:13px;display:flex;align-items:center;gap:6px;}
+  .timeline{position:relative;padding-left:24px;}
+  .timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--faint);border-radius:2px;}
+  .tl-item{position:relative;margin-bottom:20px;background:var(--card);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
+  .tl-item::before{content:'';position:absolute;left:-20px;top:18px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--paper);}
+  .tl-date{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+  .tl-content{font-size:14px;line-height:1.6;color:var(--ink2);}
+  .tl-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .tl-tag{font-size:11px;padding:3px 9px;border-radius:10px;background:var(--paper);color:var(--muted);font-weight:500;}
+  .tl-tag.motivation{background:#e8f5ee;color:var(--green);}
+  .tl-tag.tension{background:#fdecea;color:var(--accent);}
+  .tl-tag.perso{background:#fef9e7;color:var(--gold);}
+  .tl-tag.objectif{background:#e8eef5;color:var(--accent2);}
+  .ai-section{background:var(--ink);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+  .ai-section label{color:rgba(255,255,255,0.6);font-size:12px;display:block;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;}
+  .ai-input-wrap{display:flex;gap:8px;}
+  .ai-input{flex:1;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:10px 14px;color:white;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+  .ai-input::placeholder{color:rgba(255,255,255,0.35);}
+  .ai-send{background:var(--accent);border:none;color:white;width:40px;height:40px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ai-response{margin-top:12px;background:rgba(255,255,255,0.07);border-radius:10px;padding:12px;color:rgba(255,255,255,0.85);font-size:14px;line-height:1.6;display:none;}
+  .ai-response.visible{display:block;}
+  .ai-thinking{display:inline-flex;gap:4px;align-items:center;}
+  .ai-thinking span{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:bounce 1.2s ease-in-out infinite;}
+  .ai-thinking span:nth-child(2){animation-delay:0.2s;}
+  .ai-thinking span:nth-child(3){animation-delay:0.4s;}
+  @keyframes bounce{0%,80%,100%{transform:scale(0.8);opacity:0.5}40%{transform:scale(1.2);opacity:1}}
+  .form-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .form-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:16px;}
+  .form-group{margin-bottom:14px;}
+  .form-group label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:6px;}
+  .form-group input,.form-group textarea,.form-group select{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--faint);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--paper);outline:none;transition:border-color 0.2s;color:var(--ink);}
+  .form-group textarea{min-height:100px;resize:vertical;line-height:1.6;}
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);background:white;}
+  .tag-selector{display:flex;flex-wrap:wrap;gap:8px;}
+  .tag-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--faint);background:white;font-size:12px;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+  .tag-btn.selected{background:var(--ink);color:white;border-color:var(--ink);}
+  .submit-btn{width:100%;padding:14px;background:var(--ink);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:6px;}
+  .submit-btn:hover{background:var(--accent);}
+  .submit-btn:disabled{background:var(--muted);cursor:not-allowed;}
+  .alert-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;border-left:4px solid var(--accent);}
+  .alert-card.info{border-left-color:var(--accent2);}
+  .alert-card.success{border-left-color:var(--green);}
+  .alert-icon{font-size:22px;flex-shrink:0;}
+  .alert-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .alert-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+  .fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:var(--accent);color:white;border:none;border-radius:50%;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(200,69,42,0.4);transition:transform 0.2s;z-index:50;display:flex;align-items:center;justify-content:center;}
+  .fab:hover{transform:scale(1.1);}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:white;padding:12px 20px;border-radius:12px;font-size:14px;opacity:0;transition:all 0.3s;z-index:200;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .stats-row{display:flex;gap:10px;margin-bottom:16px;}
+  .stat-mini{flex:1;background:var(--card);border-radius:12px;padding:12px;text-align:center;box-shadow:var(--shadow);}
+  .stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);}
+  .stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .loading{text-align:center;padding:32px;color:var(--muted);}
+  .config-banner{background:#fef9e7;border:1.5px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.6;}
+  .config-banner strong{color:var(--gold);}
+  .setup-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .setup-card h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:12px;}
+  .setup-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+  .step-num{width:28px;height:28px;background:var(--ink);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+  .step-text{font-size:14px;line-height:1.6;flex:1;}
+  .step-text code{background:var(--faint);padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace;}
+</style>
+</head>
+<body>
+
+<div id="main-app">
+  <header>
+    <div class="logo">Team<span>Pulse</span></div>
+    <div id="sync-indicator" class="sync-status">⚙️ Config</div>
+  </header>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('equipe')">👥 Équipe</div>
+    <div class="tab" onclick="switchTab('alertes')">🔔 Alertes</div>
+    <div class="tab" onclick="switchTab('ajouter')">✏️ Saisir</div>
+    <div class="tab" onclick="switchTab('ia')">🤖 IA</div>
+    <div class="tab" onclick="switchTab('config')">⚙️ Config</div>
+  </div>
+
+  <!-- VUE ÉQUIPE -->
+  <div class="view active" id="view-equipe">
+    <div class="stats-row">
+      <div class="stat-mini"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Collaborateurs</div></div>
+      <div class="stat-mini"><div class="stat-num" id="stat-entretiens">—</div><div class="stat-lbl">Entretiens</div></div>
+      <div class="stat-mini"><div class="stat-num" style="color:var(--accent)" id="stat-alertes">—</div><div class="stat-lbl">Alertes</div></div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Rechercher..." id="search-input" oninput="filterCollabs()">
+    </div>
+    <div class="collab-grid" id="collab-grid">
+      <div class="loading">Connecte l'app dans l'onglet ⚙️ Config</div>
+    </div>
+  </div>
+
+  <!-- VUE ALERTES -->
+  <div class="view" id="view-alertes">
+    <div id="alertes-list"><div class="loading">Chargement...</div></div>
+  </div>
+
+  <!-- VUE SAISIR -->
+  <div class="view" id="view-ajouter">
+    <div class="form-card">
+      <div class="form-title">Nouvel entretien</div>
+      <div class="form-group">
+        <label>Collaborateur</label>
+        <select id="form-collab"><option value="">Sélectionner...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="form-date">
+      </div>
+      <div class="form-group">
+        <label>Ce qu'il / elle m'a dit</label>
+        <textarea id="form-content" placeholder="Notes libres : état d'esprit, préoccupations, projets..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Thèmes abordés</label>
+        <div class="tag-selector" id="tag-selector">
+          <button class="tag-btn" onclick="toggleTag(this,'motivation')">💪 Motivation</button>
+          <button class="tag-btn" onclick="toggleTag(this,'tension')">⚠️ Tension</button>
+          <button class="tag-btn" onclick="toggleTag(this,'perso')">👤 Vie perso</button>
+          <button class="tag-btn" onclick="toggleTag(this,'objectif')">🎯 Objectif</button>
+          <button class="tag-btn" onclick="toggleTag(this,'formation')">📚 Formation</button>
+          <button class="tag-btn" onclick="toggleTag(this,'qualite')">✅ Qualité</button>
+          <button class="tag-btn" onclick="toggleTag(this,'conge')">🏖️ Congés</button>
+          <button class="tag-btn" onclick="toggleTag(this,'sante')">❤️ Santé</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>✨ Détail à retenir (pour le moment venu)</label>
+        <input type="text" id="form-detail" placeholder="Ex : Son fils vient d'entrer au collège...">
+      </div>
+      <div class="form-group">
+        <label>Action à faire de ma part</label>
+        <input type="text" id="form-action" placeholder="Ex : Lui proposer la formation qualité en mai...">
+      </div>
+      <button class="submit-btn" id="save-btn" onclick="saveEntretien()">💾 Enregistrer dans Google Sheets</button>
+    </div>
+  </div>
+
+  <!-- VUE IA -->
+  <div class="view" id="view-ia">
+    <div class="ai-section">
+      <label>🤖 Question sur ton équipe</label>
+      <div class="ai-input-wrap">
+        <input type="text" class="ai-input" id="ia-global-input" placeholder="Ex: Qui n'a pas eu d'entretien depuis 1 mois ?" onkeydown="if(event.key==='Enter')askIAGlobal()">
+        <button class="ai-send" onclick="askIAGlobal()">→</button>
+      </div>
+      <div class="ai-response" id="ia-global-response"></div>
+    </div>
+    <div class="form-card">
+      <div class="section-title">Suggestions</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Qui montre des signes de démotivation dans mon équipe ?')">⚠️ Signes de démotivation ?</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Qui a des objectifs d\'évolution à suivre ?')">🎯 Objectifs d'évolution</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Résume l\'ambiance générale de l\'équipe')">📊 Ambiance générale</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Quels anniversaires et événements importants arrivent bientôt ?')">🎂 Prochains événements</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Prépare-moi des points de discussion pour mon prochain tour d\'équipe')">📋 Préparer mon tour d'équipe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VUE CONFIG -->
+  <div class="view" id="view-config">
+    <div class="setup-card">
+      <h3>🔧 Connexion Google Sheets</h3>
+      <div class="setup-step">
+        <div class="step-num">1</div>
+        <div class="step-text">Va sur <strong>script.google.com</strong>, crée un nouveau projet, colle le code Apps Script fourni.</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Dans le script, remplace <code>REMPLACE_PAR_TON_SHEET_ID</code> par l'ID de ton Google Sheet (dans l'URL) et <code>REMPLACE_PAR_TA_CLE_CLAUDE</code> par ta clé Anthropic.</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Déploie en tant que <strong>Application Web</strong> → "Tout le monde" → copie l'URL de déploiement.</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">4</div>
+        <div class="step-text">Lance la fonction <code>installerTrigger()</code> une fois pour activer le récap à 7h.</div>
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label>URL de déploiement Apps Script</label>
+        <input type="url" id="config-url" placeholder="https://script.google.com/macros/s/..." oninput="saveConfig()">
+      </div>
+      <button class="submit-btn" onclick="testerConnexion()">🔌 Tester la connexion</button>
+      <div id="test-result" style="margin-top:10px;font-size:13px;display:none;padding:10px;border-radius:8px;"></div>
+    </div>
+    <div class="setup-card">
+      <h3>➕ Ajouter un collaborateur</h3>
+      <div class="form-group"><label>Nom complet</label><input type="text" id="nc-nom" placeholder="Prénom N."></div>
+      <div class="form-group"><label>Poste</label><input type="text" id="nc-poste" placeholder="Ex : Opérateur couture"></div>
+      <div class="form-group"><label>Ancienneté</label><input type="text" id="nc-anciennete" placeholder="Ex : 3 ans"></div>
+      <div class="form-group"><label>Date de naissance (JJ/MM)</label><input type="text" id="nc-naissance" placeholder="14/03"></div>
+      <div class="form-group"><label>Infos personnelles à retenir</label><textarea id="nc-perso" placeholder="Passions, famille, ce qui lui tient à cœur..." style="min-height:70px;"></textarea></div>
+      <button class="submit-btn" onclick="ajouterCollab()">➕ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div id="detail-view">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">← Retour</button>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="avatar av-red" id="detail-avatar" style="width:56px;height:56px;font-size:24px;"></div>
+      <div>
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-sub" id="detail-sub"></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px;">
+    <div class="ai-section">
+      <label>🤖 Question sur ce collaborateur</label>
+      <div class="ai-input-wrap">
+        <input type="text" class="ai-input" id="ia-detail-input" placeholder="Ex: Qu'est-ce qui lui ferait plaisir ?" onkeydown="if(event.key==='Enter')askIADetail()">
+        <button class="ai-send" onclick="askIADetail()">→</button>
+      </div>
+      <div class="ai-response" id="ia-detail-response"></div>
+    </div>
+    <div class="section-title">Infos clés</div>
+    <div class="info-chips" id="detail-chips"></div>
+    <div class="section-title">✨ À retenir pour lui faire plaisir</div>
+    <div class="form-card" id="detail-perso" style="padding:12px 14px;font-size:14px;line-height:1.6;"></div>
+    <div class="section-title">Historique des entretiens</div>
+    <div class="timeline" id="detail-timeline"></div>
+  </div>
+</div>
+
+<button class="fab" onclick="switchTab('ajouter')" id="main-fab">+</button>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+let SCRIPT_URL = localStorage.getItem('teampulse_url') || '';
+let collabsData = [];
+let entretiensData = [];
+let currentCollab = null;
+let selectedTags = [];
+const COLORS = ['av-red','av-blue','av-gold','av-green','av-purple'];
+
+// ============================================================
+// API CALLS
+// ============================================================
+async function callScript(action, data = {}) {
+  if (!SCRIPT_URL) throw new Error('URL non configurée');
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action, ...data }),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Erreur serveur');
+  return json.data;
+}
+
+async function loadAll() {
+  if (!SCRIPT_URL) return;
+  try {
+    setSyncStatus('⟳ Sync...', '');
+    const [collabs, entretiens, alertes] = await Promise.all([
+      callScript('getCollabs'),
+      callScript('getEntretiens'),
+      callScript('getAlertes'),
+    ]);
+    collabsData = collabs || [];
+    entretiensData = entretiens || [];
+    renderCollabs(collabsData);
+    renderAlertes(alertes || []);
+    updateStats(collabsData, entretiensData, alertes || []);
+    updateCollabSelect();
+    setSyncStatus('✓ Connecté', 'ok');
+  } catch (e) {
+    setSyncStatus('✗ Erreur', 'err');
+    document.getElementById('collab-grid').innerHTML = `<div class="loading">Erreur : ${e.message}<br><small>Vérifie ta config dans ⚙️</small></div>`;
+  }
+}
+
+// ============================================================
+// RENDU LISTE
+// ============================================================
+function renderCollabs(list) {
+  const grid = document.getElementById('collab-grid');
+  if (!list || !list.length) {
+    grid.innerHTML = '<div class="loading">Aucun collaborateur.<br>Ajoute-en un dans ⚙️ Config</div>';
+    return;
+  }
+  grid.innerHTML = list.map((c, i) => {
+    const nbE = entretiensData.filter(e => e.collabId === c.id).length;
+    const color = COLORS[i % COLORS.length];
+    const initial = (c.nom || '?')[0].toUpperCase();
+    return `
+      <div class="collab-card priority-ok" onclick="openDetail('${c.id}')">
+        <div class="avatar ${color}">${initial}</div>
+        <div class="collab-info">
+          <div class="collab-name">${c.nom}</div>
+          <div class="collab-meta">${c.poste || ''} · ${c.anciennete || ''} · ${nbE} entretien${nbE>1?'s':''}</div>
+        </div>
+        <span class="collab-badge badge-ok">OK</span>
+      </div>`;
+  }).join('');
+}
+
+function filterCollabs() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  renderCollabs(collabsData.filter(c =>
+    (c.nom||'').toLowerCase().includes(q) || (c.poste||'').toLowerCase().includes(q)
+  ));
+}
+
+function renderAlertes(alertes) {
+  const div = document.getElementById('alertes-list');
+  if (!alertes.length) {
+    div.innerHTML = '<div class="loading">✅ Aucune alerte pour le moment</div>';
+    return;
+  }
+  const typeClass = { entretien_manquant: '', anniversaire: 'success', action: 'info', jamais_entrevu: '' };
+  div.innerHTML = alertes.map(a => `
+    <div class="alert-card ${typeClass[a.type]||''}">
+      <div class="alert-icon">${a.icone}</div>
+      <div>
+        <div class="alert-title">${a.titre}</div>
+        <div class="alert-desc">${a.desc}</div>
+      </div>
+    </div>`).join('');
+}
+
+function updateStats(collabs, entretiens, alertes) {
+  document.getElementById('stat-total').textContent = collabs.length;
+  document.getElementById('stat-entretiens').textContent = entretiens.length;
+  document.getElementById('stat-alertes').textContent = alertes.filter(a => a.urgence === 'haute').length;
+}
+
+function updateCollabSelect() {
+  const sel = document.getElementById('form-collab');
+  sel.innerHTML = '<option value="">Sélectionner...</option>' +
+    collabsData.map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
+}
+
+// ============================================================
+// DETAIL
+// ============================================================
+function openDetail(id) {
+  currentCollab = collabsData.find(c => c.id === id);
+  if (!currentCollab) return;
+  const sesEntretiens = entretiensData.filter(e => e.collabId === id)
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+  const i = collabsData.indexOf(currentCollab);
+  const color = COLORS[i % COLORS.length];
+
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('main-fab').style.display = 'none';
+  const dv = document.getElementById('detail-view');
+  dv.style.display = 'block';
+  document.getElementById('detail-name').textContent = currentCollab.nom;
+  document.getElementById('detail-sub').textContent = (currentCollab.poste||'') + ' · ' + (currentCollab.anciennete||'');
+  document.getElementById('detail-avatar').textContent = (currentCollab.nom||'?')[0].toUpperCase();
+  document.getElementById('detail-avatar').className = 'avatar ' + color;
+
+  const chips = [currentCollab.poste, currentCollab.anciennete, currentCollab.dateNaissance ? '🎂 ' + currentCollab.dateNaissance : null]
+    .filter(Boolean).map(c => `<div class="chip">${c}</div>`).join('');
+  document.getElementById('detail-chips').innerHTML = chips;
+  document.getElementById('detail-perso').textContent = currentCollab.infosPerso || 'Aucune info personnelle enregistrée.';
+
+  document.getElementById('detail-timeline').innerHTML = sesEntretiens.length
+    ? sesEntretiens.map(e => `
+        <div class="tl-item">
+          <div class="tl-date">📅 ${e.date}</div>
+          <div class="tl-content">${e.contenu}</div>
+          ${e.detailRetenir ? `<div style="margin-top:8px;font-size:13px;background:#fef9e7;padding:8px 10px;border-radius:8px;">✨ ${e.detailRetenir}</div>` : ''}
+          ${e.actionAFaire ? `<div style="margin-top:6px;font-size:13px;background:#e8eef5;padding:8px 10px;border-radius:8px;">🎯 ${e.actionAFaire}</div>` : ''}
+          <div class="tl-tags">${(e.tags||'').split(',').filter(Boolean).map(t => `<span class="tl-tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
+        </div>`).join('')
+    : '<div class="loading">Aucun entretien enregistré</div>';
+
+  document.getElementById('ia-detail-input').value = '';
+  document.getElementById('ia-detail-response').className = 'ai-response';
+  window.scrollTo(0,0);
+}
+
+function closeDetail() {
+  document.getElementById('detail-view').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('main-fab').style.display = 'flex';
+}
+
+function tagLabel(t) {
+  const l = {motivation:'💪 Motivation',tension:'⚠️ Tension',perso:'👤 Vie perso',objectif:'🎯 Objectif',formation:'📚 Formation',qualite:'✅ Qualité',conge:'🏖️ Congés',sante:'❤️ Santé'};
+  return l[t]||t;
+}
+
+// ============================================================
+// SAVE ENTRETIEN
+// ============================================================
+async function saveEntretien() {
+  const collabId = document.getElementById('form-collab').value;
+  const contenu = document.getElementById('form-content').value;
+  if (!collabId || !contenu) { showToast('⚠️ Collaborateur et notes requis'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Enregistrement...';
+
+  const collab = collabsData.find(c => c.id === collabId);
+  try {
+    await callScript('saveEntretien', { data: {
+      collabId,
+      collabNom: collab?.nom || '',
+      date: document.getElementById('form-date').value,
+      contenu,
+      tags: selectedTags,
+      detailRetenir: document.getElementById('form-detail').value,
+      actionAFaire: document.getElementById('form-action').value,
+    }});
+    showToast('✅ Enregistré dans Google Sheets !');
+    document.getElementById('form-content').value = '';
+    document.getElementById('form-detail').value = '';
+    document.getElementById('form-action').value = '';
+    selectedTags = [];
+    document.querySelectorAll('.tag-btn.selected').forEach(b => b.classList.remove('selected'));
+    await loadAll();
+  } catch(e) {
+    showToast('❌ Erreur : ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '💾 Enregistrer dans Google Sheets';
+}
+
+// ============================================================
+// AJOUTER COLLAB
+// ============================================================
+async function ajouterCollab() {
+  const nom = document.getElementById('nc-nom').value.trim();
+  if (!nom) { showToast('⚠️ Nom requis'); return; }
+  try {
+    await callScript('saveCollab', { data: {
+      nom,
+      poste: document.getElementById('nc-poste').value,
+      anciennete: document.getElementById('nc-anciennete').value,
+      dateNaissance: document.getElementById('nc-naissance').value,
+      infosPerso: document.getElementById('nc-perso').value,
+      avatarInitiale: nom[0].toUpperCase(),
+    }});
+    showToast('✅ ' + nom + ' ajouté !');
+    ['nc-nom','nc-poste','nc-anciennete','nc-naissance','nc-perso'].forEach(id => document.getElementById(id).value = '');
+    await loadAll();
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+// ============================================================
+// IA
+// ============================================================
+async function askIAGlobal() {
+  const input = document.getElementById('ia-global-input');
+  const respDiv = document.getElementById('ia-global-response');
+  const question = input.value.trim();
+  if (!question) return;
+  respDiv.className = 'ai-response visible';
+  respDiv.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
+  try {
+    const context = buildContext();
+    const result = await callScript('askClaude', { question, context });
+    respDiv.innerHTML = result.replace(/\n/g,'<br>');
+  } catch(e) {
+    respDiv.innerHTML = '❌ ' + e.message;
+  }
+}
+
+async function askIADetail() {
+  if (!currentCollab) return;
+  const input = document.getElementById('ia-detail-input');
+  const respDiv = document.getElementById('ia-detail-response');
+  const question = input.value.trim();
+  if (!question) return;
+  respDiv.className = 'ai-response visible';
+  respDiv.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
+  try {
+    const sesEntretiens = entretiensData.filter(e => e.collabId === currentCollab.id);
+    const context = `Collaborateur: ${currentCollab.nom} (${currentCollab.poste}, ${currentCollab.anciennete})\nInfos perso: ${currentCollab.infosPerso}\nEntretiens: ${sesEntretiens.map(e=>`[${e.date}] ${e.contenu}`).join(' | ')}`;
+    const result = await callScript('askClaude', { question, context });
+    respDiv.innerHTML = result.replace(/\n/g,'<br>');
+  } catch(e) {
+    respDiv.innerHTML = '❌ ' + e.message;
+  }
+}
+
+function buildContext() {
+  return collabsData.map(c => {
+    const es = entretiensData.filter(e=>e.collabId===c.id).slice(0,3).map(e=>`[${e.date}] ${e.contenu}`).join(' | ');
+    return `${c.nom} (${c.poste}) — ${c.infosPerso} — ${es||'aucun entretien'}`;
+  }).join('\n');
+}
+
+function setQ(q) { document.getElementById('ia-global-input').value=q; }
+
+// ============================================================
+// CONFIG
+// ============================================================
+function saveConfig() {
+  SCRIPT_URL = document.getElementById('config-url').value.trim();
+  localStorage.setItem('teampulse_url', SCRIPT_URL);
+}
+
+async function testerConnexion() {
+  const url = document.getElementById('config-url').value.trim();
+  if (!url) { showToast('⚠️ Entre d\'abord l\'URL'); return; }
+  SCRIPT_URL = url;
+  const res = document.getElementById('test-result');
+  res.style.display = 'block';
+  res.style.background = '#fef9e7';
+  res.textContent = '⏳ Test en cours...';
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    res.style.background = '#e8f5ee';
+    res.textContent = '✅ Connexion OK ! ' + (data.status || JSON.stringify(data));
+    localStorage.setItem('teampulse_url', url);
+    await loadAll();
+  } catch(e) {
+    res.style.background = '#fdecea';
+    res.textContent = '❌ Erreur : ' + e.message;
+  }
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function toggleTag(btn, tag) {
+  btn.classList.toggle('selected');
+  if (selectedTags.includes(tag)) selectedTags = selectedTags.filter(t=>t!==tag);
+  else selectedTags.push(tag);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const tabs = ['equipe','alertes','ajouter','ia','config'];
+    t.classList.toggle('active', tabs[i]===tab);
+  });
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function setSyncStatus(text, cls) {
+  const el = document.getElementById('sync-indicator');
+  el.textContent = text;
+  el.className = 'sync-status ' + cls;
+}
+
+// Init
+document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+if (SCRIPT_URL) {
+  document.getElementById('config-url').value = SCRIPT_URL;
+  loadAll();
+} else {
+  setSyncStatus('⚙️ Config', '');
+}
+</script>
+</body>
+</html>
