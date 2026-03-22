@@ -611,7 +611,7 @@ async function askIAGlobal() {
   try {
     const context = collabsData.map(c => {
       const es = entretiensData.filter(e=>e.collabId===c.id).slice(0,3).map(e=>`[${e.date}] ${e.contenu}`).join(' | ');
-      return `${c.nom} (${c.poste}) — ${c.infosPerso} — ${es||'aucun entretien'}`;
+      return `${c.nom} (${c.poste}, équipe ${c.equipe||'non renseignée'}) — ${c.infosPerso} — ${es||'aucun entretien'}`;
     }).join('\n');
     const result = await callScript('askClaude', { question, context });
     respDiv.innerHTML = result.replace(/\n/g,'<br>');
@@ -628,7 +628,7 @@ async function askIADetail() {
   respDiv.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
   try {
     const sesEntretiens = entretiensData.filter(e => e.collabId === currentCollab.id);
-    const context = `Collaborateur: ${currentCollab.nom} (${currentCollab.poste}, ${currentCollab.anciennete})\nInfos perso: ${currentCollab.infosPerso}\nEntretiens: ${sesEntretiens.map(e=>`[${e.date}] ${e.contenu}`).join(' | ')}`;
+    const context = `Collaborateur: ${currentCollab.nom} (${currentCollab.poste}, ${currentCollab.anciennete}, équipe ${currentCollab.equipe||'non renseignée'})\nInfos perso: ${currentCollab.infosPerso}\nEntretiens: ${sesEntretiens.map(e=>`[${e.date}] ${e.contenu}`).join(' | ')}`;
     const result = await callScript('askClaude', { question, context });
     respDiv.innerHTML = result.replace(/\n/g,'<br>');
   } catch(e) { respDiv.innerHTML = '❌ ' + e.message; }
