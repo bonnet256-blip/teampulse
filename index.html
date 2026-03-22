@@ -513,9 +513,10 @@ function openDetail(id) {
   document.getElementById('detail-avatar').textContent = (currentCollab.nom||'?')[0].toUpperCase();
   document.getElementById('detail-avatar').className = 'avatar ' + color;
 
+  const equipe = currentCollab.equipe || '';
   const chips = [currentCollab.poste, currentCollab.anciennete,
-    currentCollab.dateNaissance ? '🎂 ' + currentCollab.dateNaissance : null,
-    currentCollab.equipe ? '🕐 ' + currentCollab.equipe : null]
+    equipe ? '🕐 Équipe ' + equipe : null,
+    currentCollab.dateNaissance ? '🎂 ' + currentCollab.dateNaissance : null]
     .filter(Boolean).map(c => `<div class="chip">${c}</div>`).join('');
   document.getElementById('detail-chips').innerHTML = chips;
   document.getElementById('detail-perso').textContent = currentCollab.infosPerso || 'Aucune info personnelle enregistrée.';
