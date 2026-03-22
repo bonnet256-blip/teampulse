@@ -20,8 +20,8 @@
   .sync-status{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);}
   .sync-status.ok{background:rgba(42,140,90,0.3);color:#7eeaaa;}
   .sync-status.err{background:rgba(200,69,42,0.3);color:#ffaaaa;}
-  .tabs{display:flex;background:var(--ink2);padding:0 16px;}
-  .tab{flex:1;text-align:center;padding:12px 8px;color:rgba(255,255,255,0.45);font-size:12px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+  .tabs{display:flex;background:var(--ink2);padding:0 8px;}
+  .tab{flex:1;text-align:center;padding:12px 4px;color:rgba(255,255,255,0.45);font-size:11px;font-weight:500;letter-spacing:0.3px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
   .tab.active{color:white;border-bottom-color:var(--accent);}
   .view{display:none;padding:20px 16px;}.view.active{display:block;}
   .search-wrap{position:relative;margin-bottom:16px;}
@@ -29,20 +29,45 @@
   .search-wrap input:focus{border-color:var(--accent);}
   .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;}
   .collab-grid{display:flex;flex-direction:column;gap:12px;}
-  .collab-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;border-left:4px solid transparent;display:flex;align-items:center;gap:14px;}
-  .collab-card:hover{transform:translateY(-2px);box-shadow:0 6px 32px rgba(0,0,0,0.12);}
+  .collab-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;border-left:4px solid transparent;display:flex;align-items:center;gap:14px;}
   .collab-card.priority-high{border-left-color:var(--accent);}
   .collab-card.priority-mid{border-left-color:var(--gold);}
   .collab-card.priority-ok{border-left-color:var(--green);}
-  .avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:20px;color:white;flex-shrink:0;}
-  .av-red{background:var(--accent);}.av-blue{background:var(--accent2);}.av-gold{background:var(--gold);}.av-green{background:var(--green);}.av-purple{background:#8c2ac8;}
-  .collab-info{flex:1;min-width:0;}
+  .collab-card-body{flex:1;min-width:0;cursor:pointer;}
   .collab-name{font-size:16px;font-weight:600;margin-bottom:2px;}
-  .collab-meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .collab-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500;flex-shrink:0;}
+  .collab-meta{font-size:12px;color:var(--muted);}
+  .collab-actions{display:flex;gap:6px;flex-shrink:0;}
+  .btn-edit{background:#e8eef5;border:none;color:var(--accent2);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .btn-delete{background:#fdecea;border:none;color:var(--accent);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .collab-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500;}
   .badge-alert{background:#fdecea;color:var(--accent);}
   .badge-ok{background:#e8f5ee;color:var(--green);}
   .badge-soon{background:#fef9e7;color:var(--gold);}
+  .avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:20px;color:white;flex-shrink:0;}
+  .av-red{background:var(--accent);}.av-blue{background:var(--accent2);}.av-gold{background:var(--gold);}.av-green{background:var(--green);}.av-purple{background:#8c2ac8;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:var(--card);border-radius:var(--radius);padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+  .modal-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;}
+  .btn-cancel{flex:1;padding:12px;background:var(--faint);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+  .btn-save{flex:2;padding:12px;background:var(--ink);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+  .btn-save:hover{background:var(--accent);}
+
+  /* CONFIRM DELETE */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+  .confirm-overlay.active{display:flex;}
+  .confirm-box{background:var(--card);border-radius:var(--radius);padding:24px;width:100%;max-width:360px;text-align:center;}
+  .confirm-icon{font-size:40px;margin-bottom:12px;}
+  .confirm-title{font-size:18px;font-weight:600;margin-bottom:8px;}
+  .confirm-desc{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+  .confirm-actions{display:flex;gap:10px;}
+  .btn-confirm-cancel{flex:1;padding:12px;background:var(--faint);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+  .btn-confirm-delete{flex:1;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+
+  /* DETAIL */
   #detail-view{display:none;}
   #detail-view.active{display:block;}
   .detail-header{background:var(--ink);color:white;padding:20px 16px 24px;}
@@ -51,7 +76,7 @@
   .detail-sub{font-size:14px;color:rgba(255,255,255,0.6);}
   .section-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 0 10px;}
   .info-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
-  .chip{background:var(--card);border:1.5px solid var(--faint);border-radius:20px;padding:6px 14px;font-size:13px;display:flex;align-items:center;gap:6px;}
+  .chip{background:var(--card);border:1.5px solid var(--faint);border-radius:20px;padding:6px 14px;font-size:13px;}
   .timeline{position:relative;padding-left:24px;}
   .timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--faint);border-radius:2px;}
   .tl-item{position:relative;margin-bottom:20px;background:var(--card);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
@@ -105,14 +130,11 @@
   .stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);}
   .stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
   .loading{text-align:center;padding:32px;color:var(--muted);}
-  .config-banner{background:#fef9e7;border:1.5px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;line-height:1.6;}
-  .config-banner strong{color:var(--gold);}
   .setup-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
   .setup-card h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:12px;}
   .setup-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
   .step-num{width:28px;height:28px;background:var(--ink);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
   .step-text{font-size:14px;line-height:1.6;flex:1;}
-  .step-text code{background:var(--faint);padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace;}
 </style>
 </head>
 <body>
@@ -142,7 +164,7 @@
       <input type="text" placeholder="Rechercher..." id="search-input" oninput="filterCollabs()">
     </div>
     <div class="collab-grid" id="collab-grid">
-      <div class="loading">Connecte l'app dans l'onglet ⚙️ Config</div>
+      <div class="loading">Connecte l'app dans ⚙️ Config</div>
     </div>
   </div>
 
@@ -155,21 +177,12 @@
   <div class="view" id="view-ajouter">
     <div class="form-card">
       <div class="form-title">Nouvel entretien</div>
-      <div class="form-group">
-        <label>Collaborateur</label>
-        <select id="form-collab"><option value="">Sélectionner...</option></select>
-      </div>
-      <div class="form-group">
-        <label>Date</label>
-        <input type="date" id="form-date">
-      </div>
-      <div class="form-group">
-        <label>Ce qu'il / elle m'a dit</label>
-        <textarea id="form-content" placeholder="Notes libres : état d'esprit, préoccupations, projets..."></textarea>
-      </div>
+      <div class="form-group"><label>Collaborateur</label><select id="form-collab"><option value="">Sélectionner...</option></select></div>
+      <div class="form-group"><label>Date</label><input type="date" id="form-date"></div>
+      <div class="form-group"><label>Ce qu'il / elle m'a dit</label><textarea id="form-content" placeholder="Notes libres..."></textarea></div>
       <div class="form-group">
         <label>Thèmes abordés</label>
-        <div class="tag-selector" id="tag-selector">
+        <div class="tag-selector">
           <button class="tag-btn" onclick="toggleTag(this,'motivation')">💪 Motivation</button>
           <button class="tag-btn" onclick="toggleTag(this,'tension')">⚠️ Tension</button>
           <button class="tag-btn" onclick="toggleTag(this,'perso')">👤 Vie perso</button>
@@ -180,15 +193,9 @@
           <button class="tag-btn" onclick="toggleTag(this,'sante')">❤️ Santé</button>
         </div>
       </div>
-      <div class="form-group">
-        <label>✨ Détail à retenir (pour le moment venu)</label>
-        <input type="text" id="form-detail" placeholder="Ex : Son fils vient d'entrer au collège...">
-      </div>
-      <div class="form-group">
-        <label>Action à faire de ma part</label>
-        <input type="text" id="form-action" placeholder="Ex : Lui proposer la formation qualité en mai...">
-      </div>
-      <button class="submit-btn" id="save-btn" onclick="saveEntretien()">💾 Enregistrer dans Google Sheets</button>
+      <div class="form-group"><label>✨ Détail à retenir</label><input type="text" id="form-detail" placeholder="Ex : Son fils vient d'entrer au collège..."></div>
+      <div class="form-group"><label>Action à faire</label><input type="text" id="form-action" placeholder="Ex : Lui proposer la formation qualité..."></div>
+      <button class="submit-btn" id="save-btn" onclick="saveEntretien()">💾 Enregistrer</button>
     </div>
   </div>
 
@@ -205,11 +212,11 @@
     <div class="form-card">
       <div class="section-title">Suggestions</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Qui montre des signes de démotivation dans mon équipe ?')">⚠️ Signes de démotivation ?</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Qui montre des signes de démotivation ?')">⚠️ Signes de démotivation ?</button>
         <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Qui a des objectifs d\'évolution à suivre ?')">🎯 Objectifs d'évolution</button>
         <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Résume l\'ambiance générale de l\'équipe')">📊 Ambiance générale</button>
-        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Quels anniversaires et événements importants arrivent bientôt ?')">🎂 Prochains événements</button>
-        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Prépare-moi des points de discussion pour mon prochain tour d\'équipe')">📋 Préparer mon tour d'équipe</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Quels anniversaires arrivent bientôt ?')">🎂 Prochains événements</button>
+        <button class="tag-btn" style="text-align:left;padding:10px 14px;border-radius:10px;" onclick="setQ('Prépare-moi des points pour mon prochain tour d\'équipe')">📋 Préparer mon tour d'équipe</button>
       </div>
     </div>
   </div>
@@ -218,23 +225,7 @@
   <div class="view" id="view-config">
     <div class="setup-card">
       <h3>🔧 Connexion Google Sheets</h3>
-      <div class="setup-step">
-        <div class="step-num">1</div>
-        <div class="step-text">Va sur <strong>script.google.com</strong>, crée un nouveau projet, colle le code Apps Script fourni.</div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">2</div>
-        <div class="step-text">Dans le script, remplace <code>REMPLACE_PAR_TON_SHEET_ID</code> par l'ID de ton Google Sheet (dans l'URL) et <code>REMPLACE_PAR_TA_CLE_CLAUDE</code> par ta clé Anthropic.</div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">3</div>
-        <div class="step-text">Déploie en tant que <strong>Application Web</strong> → "Tout le monde" → copie l'URL de déploiement.</div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">4</div>
-        <div class="step-text">Lance la fonction <code>installerTrigger()</code> une fois pour activer le récap à 7h.</div>
-      </div>
-      <div class="form-group" style="margin-top:16px;">
+      <div class="form-group" style="margin-top:8px;">
         <label>URL de déploiement Apps Script</label>
         <input type="url" id="config-url" placeholder="https://script.google.com/macros/s/..." oninput="saveConfig()">
       </div>
@@ -283,22 +274,50 @@
   </div>
 </div>
 
+<!-- MODAL MODIFIER COLLABORATEUR -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier le collaborateur</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group"><label>Nom complet</label><input type="text" id="edit-nom"></div>
+    <div class="form-group"><label>Poste</label><input type="text" id="edit-poste"></div>
+    <div class="form-group"><label>Ancienneté</label><input type="text" id="edit-anciennete"></div>
+    <div class="form-group"><label>Date de naissance (JJ/MM)</label><input type="text" id="edit-naissance"></div>
+    <div class="form-group"><label>Infos personnelles à retenir</label><textarea id="edit-perso" style="min-height:100px;"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="sauvegarderModif()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirm-delete">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Supprimer ce collaborateur ?</div>
+    <div class="confirm-desc" id="confirm-desc">Cette action supprimera le collaborateur de la base. Ses entretiens seront conservés.</div>
+    <div class="confirm-actions">
+      <button class="btn-confirm-cancel" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-confirm-delete" onclick="confirmerSuppression()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <button class="fab" onclick="switchTab('ajouter')" id="main-fab">+</button>
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// CONFIG & STATE
-// ============================================================
 let SCRIPT_URL = localStorage.getItem('teampulse_url') || '';
 let collabsData = [];
 let entretiensData = [];
 let currentCollab = null;
 let selectedTags = [];
+let collabToDelete = null;
 const COLORS = ['av-red','av-blue','av-gold','av-green','av-purple'];
 
 // ============================================================
-// API CALLS
+// API
 // ============================================================
 async function callScript(action, data = {}) {
   if (!SCRIPT_URL) throw new Error('URL non configurée');
@@ -329,7 +348,7 @@ async function loadAll() {
     setSyncStatus('✓ Connecté', 'ok');
   } catch (e) {
     setSyncStatus('✗ Erreur', 'err');
-    document.getElementById('collab-grid').innerHTML = `<div class="loading">Erreur : ${e.message}<br><small>Vérifie ta config dans ⚙️</small></div>`;
+    document.getElementById('collab-grid').innerHTML = `<div class="loading">Erreur : ${e.message}</div>`;
   }
 }
 
@@ -347,13 +366,16 @@ function renderCollabs(list) {
     const color = COLORS[i % COLORS.length];
     const initial = (c.nom || '?')[0].toUpperCase();
     return `
-      <div class="collab-card priority-ok" onclick="openDetail('${c.id}')">
+      <div class="collab-card priority-ok">
         <div class="avatar ${color}">${initial}</div>
-        <div class="collab-info">
+        <div class="collab-card-body" onclick="openDetail('${c.id}')">
           <div class="collab-name">${c.nom}</div>
           <div class="collab-meta">${c.poste || ''} · ${c.anciennete || ''} · ${nbE} entretien${nbE>1?'s':''}</div>
         </div>
-        <span class="collab-badge badge-ok">OK</span>
+        <div class="collab-actions">
+          <button class="btn-edit" onclick="ouvrirModif('${c.id}')" title="Modifier">✏️</button>
+          <button class="btn-delete" onclick="demanderSuppression('${c.id}')" title="Supprimer">🗑️</button>
+        </div>
       </div>`;
   }).join('');
 }
@@ -371,7 +393,7 @@ function renderAlertes(alertes) {
     div.innerHTML = '<div class="loading">✅ Aucune alerte pour le moment</div>';
     return;
   }
-  const typeClass = { entretien_manquant: '', anniversaire: 'success', action: 'info', jamais_entrevu: '' };
+  const typeClass = { anniversaire: 'success', action: 'info' };
   div.innerHTML = alertes.map(a => `
     <div class="alert-card ${typeClass[a.type]||''}">
       <div class="alert-icon">${a.icone}</div>
@@ -395,6 +417,80 @@ function updateCollabSelect() {
 }
 
 // ============================================================
+// MODIFIER COLLABORATEUR
+// ============================================================
+function ouvrirModif(id) {
+  const c = collabsData.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('edit-id').value = c.id;
+  document.getElementById('edit-nom').value = c.nom || '';
+  document.getElementById('edit-poste').value = c.poste || '';
+  document.getElementById('edit-anciennete').value = c.anciennete || '';
+  document.getElementById('edit-naissance').value = c.dateNaissance || '';
+  document.getElementById('edit-perso').value = c.infosPerso || '';
+  document.getElementById('modal-edit').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-edit').classList.remove('active');
+}
+
+async function sauvegarderModif() {
+  const id = document.getElementById('edit-id').value;
+  const nom = document.getElementById('edit-nom').value.trim();
+  if (!nom) { showToast('⚠️ Nom requis'); return; }
+  try {
+    await callScript('saveCollab', { data: {
+      id,
+      nom,
+      poste: document.getElementById('edit-poste').value,
+      anciennete: document.getElementById('edit-anciennete').value,
+      dateNaissance: document.getElementById('edit-naissance').value,
+      infosPerso: document.getElementById('edit-perso').value,
+      avatarInitiale: nom[0].toUpperCase(),
+    }});
+    closeModal();
+    showToast('✅ ' + nom + ' mis à jour !');
+    await loadAll();
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+// ============================================================
+// SUPPRIMER COLLABORATEUR
+// ============================================================
+function demanderSuppression(id) {
+  const c = collabsData.find(x => x.id === id);
+  if (!c) return;
+  collabToDelete = id;
+  document.getElementById('confirm-desc').textContent =
+    `Supprimer ${c.nom} de la base ? Ses entretiens seront conservés dans Google Sheets.`;
+  document.getElementById('confirm-delete').classList.add('active');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-delete').classList.remove('active');
+  collabToDelete = null;
+}
+
+async function confirmerSuppression() {
+  if (!collabToDelete) return;
+  try {
+    await callScript('deleteCollab', { collabId: collabToDelete });
+    closeConfirm();
+    showToast('🗑️ Collaborateur supprimé');
+    await loadAll();
+  } catch(e) {
+    // Suppression locale si le script ne supporte pas encore
+    collabsData = collabsData.filter(c => c.id !== collabToDelete);
+    renderCollabs(collabsData);
+    closeConfirm();
+    showToast('🗑️ Supprimé localement — pense à supprimer la ligne dans Google Sheets');
+  }
+}
+
+// ============================================================
 // DETAIL
 // ============================================================
 function openDetail(id) {
@@ -407,18 +503,17 @@ function openDetail(id) {
 
   document.getElementById('main-app').style.display = 'none';
   document.getElementById('main-fab').style.display = 'none';
-  const dv = document.getElementById('detail-view');
-  dv.style.display = 'block';
+  document.getElementById('detail-view').style.display = 'block';
   document.getElementById('detail-name').textContent = currentCollab.nom;
   document.getElementById('detail-sub').textContent = (currentCollab.poste||'') + ' · ' + (currentCollab.anciennete||'');
   document.getElementById('detail-avatar').textContent = (currentCollab.nom||'?')[0].toUpperCase();
   document.getElementById('detail-avatar').className = 'avatar ' + color;
 
-  const chips = [currentCollab.poste, currentCollab.anciennete, currentCollab.dateNaissance ? '🎂 ' + currentCollab.dateNaissance : null]
+  const chips = [currentCollab.poste, currentCollab.anciennete,
+    currentCollab.dateNaissance ? '🎂 ' + currentCollab.dateNaissance : null]
     .filter(Boolean).map(c => `<div class="chip">${c}</div>`).join('');
   document.getElementById('detail-chips').innerHTML = chips;
   document.getElementById('detail-perso').textContent = currentCollab.infosPerso || 'Aucune info personnelle enregistrée.';
-
   document.getElementById('detail-timeline').innerHTML = sesEntretiens.length
     ? sesEntretiens.map(e => `
         <div class="tl-item">
@@ -426,7 +521,7 @@ function openDetail(id) {
           <div class="tl-content">${e.contenu}</div>
           ${e.detailRetenir ? `<div style="margin-top:8px;font-size:13px;background:#fef9e7;padding:8px 10px;border-radius:8px;">✨ ${e.detailRetenir}</div>` : ''}
           ${e.actionAFaire ? `<div style="margin-top:6px;font-size:13px;background:#e8eef5;padding:8px 10px;border-radius:8px;">🎯 ${e.actionAFaire}</div>` : ''}
-          <div class="tl-tags">${(e.tags||'').split(',').filter(Boolean).map(t => `<span class="tl-tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
+          <div class="tl-tags">${(e.tags||'').split(',').filter(Boolean).map(t=>`<span class="tl-tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
         </div>`).join('')
     : '<div class="loading">Aucun entretien enregistré</div>';
 
@@ -442,7 +537,7 @@ function closeDetail() {
 }
 
 function tagLabel(t) {
-  const l = {motivation:'💪 Motivation',tension:'⚠️ Tension',perso:'👤 Vie perso',objectif:'🎯 Objectif',formation:'📚 Formation',qualite:'✅ Qualité',conge:'🏖️ Congés',sante:'❤️ Santé'};
+  const l={motivation:'💪 Motivation',tension:'⚠️ Tension',perso:'👤 Vie perso',objectif:'🎯 Objectif',formation:'📚 Formation',qualite:'✅ Qualité',conge:'🏖️ Congés',sante:'❤️ Santé'};
   return l[t]||t;
 }
 
@@ -453,32 +548,26 @@ async function saveEntretien() {
   const collabId = document.getElementById('form-collab').value;
   const contenu = document.getElementById('form-content').value;
   if (!collabId || !contenu) { showToast('⚠️ Collaborateur et notes requis'); return; }
-
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '⏳ Enregistrement...';
-
   const collab = collabsData.find(c => c.id === collabId);
   try {
     await callScript('saveEntretien', { data: {
-      collabId,
-      collabNom: collab?.nom || '',
+      collabId, collabNom: collab?.nom || '',
       date: document.getElementById('form-date').value,
-      contenu,
-      tags: selectedTags,
+      contenu, tags: selectedTags,
       detailRetenir: document.getElementById('form-detail').value,
       actionAFaire: document.getElementById('form-action').value,
     }});
-    showToast('✅ Enregistré dans Google Sheets !');
+    showToast('✅ Entretien enregistré !');
     document.getElementById('form-content').value = '';
     document.getElementById('form-detail').value = '';
     document.getElementById('form-action').value = '';
     selectedTags = [];
     document.querySelectorAll('.tag-btn.selected').forEach(b => b.classList.remove('selected'));
     await loadAll();
-  } catch(e) {
-    showToast('❌ Erreur : ' + e.message);
-  }
-  btn.disabled = false; btn.textContent = '💾 Enregistrer dans Google Sheets';
+  } catch(e) { showToast('❌ ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 Enregistrer';
 }
 
 // ============================================================
@@ -499,9 +588,7 @@ async function ajouterCollab() {
     showToast('✅ ' + nom + ' ajouté !');
     ['nc-nom','nc-poste','nc-anciennete','nc-naissance','nc-perso'].forEach(id => document.getElementById(id).value = '');
     await loadAll();
-  } catch(e) {
-    showToast('❌ ' + e.message);
-  }
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 // ============================================================
@@ -515,12 +602,13 @@ async function askIAGlobal() {
   respDiv.className = 'ai-response visible';
   respDiv.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
   try {
-    const context = buildContext();
+    const context = collabsData.map(c => {
+      const es = entretiensData.filter(e=>e.collabId===c.id).slice(0,3).map(e=>`[${e.date}] ${e.contenu}`).join(' | ');
+      return `${c.nom} (${c.poste}) — ${c.infosPerso} — ${es||'aucun entretien'}`;
+    }).join('\n');
     const result = await callScript('askClaude', { question, context });
     respDiv.innerHTML = result.replace(/\n/g,'<br>');
-  } catch(e) {
-    respDiv.innerHTML = '❌ ' + e.message;
-  }
+  } catch(e) { respDiv.innerHTML = '❌ ' + e.message; }
 }
 
 async function askIADetail() {
@@ -536,19 +624,10 @@ async function askIADetail() {
     const context = `Collaborateur: ${currentCollab.nom} (${currentCollab.poste}, ${currentCollab.anciennete})\nInfos perso: ${currentCollab.infosPerso}\nEntretiens: ${sesEntretiens.map(e=>`[${e.date}] ${e.contenu}`).join(' | ')}`;
     const result = await callScript('askClaude', { question, context });
     respDiv.innerHTML = result.replace(/\n/g,'<br>');
-  } catch(e) {
-    respDiv.innerHTML = '❌ ' + e.message;
-  }
+  } catch(e) { respDiv.innerHTML = '❌ ' + e.message; }
 }
 
-function buildContext() {
-  return collabsData.map(c => {
-    const es = entretiensData.filter(e=>e.collabId===c.id).slice(0,3).map(e=>`[${e.date}] ${e.contenu}`).join(' | ');
-    return `${c.nom} (${c.poste}) — ${c.infosPerso} — ${es||'aucun entretien'}`;
-  }).join('\n');
-}
-
-function setQ(q) { document.getElementById('ia-global-input').value=q; }
+function setQ(q) { document.getElementById('ia-global-input').value=q; switchTab('ia'); }
 
 // ============================================================
 // CONFIG
@@ -563,14 +642,13 @@ async function testerConnexion() {
   if (!url) { showToast('⚠️ Entre d\'abord l\'URL'); return; }
   SCRIPT_URL = url;
   const res = document.getElementById('test-result');
-  res.style.display = 'block';
-  res.style.background = '#fef9e7';
+  res.style.display = 'block'; res.style.background = '#fef9e7';
   res.textContent = '⏳ Test en cours...';
   try {
     const resp = await fetch(url);
     const data = await resp.json();
     res.style.background = '#e8f5ee';
-    res.textContent = '✅ Connexion OK ! ' + (data.status || JSON.stringify(data));
+    res.textContent = '✅ Connexion OK ! ' + (data.status || '');
     localStorage.setItem('teampulse_url', url);
     await loadAll();
   } catch(e) {
@@ -615,8 +693,6 @@ document.getElementById('form-date').value = new Date().toISOString().split('T')
 if (SCRIPT_URL) {
   document.getElementById('config-url').value = SCRIPT_URL;
   loadAll();
-} else {
-  setSyncStatus('⚙️ Config', '');
 }
 </script>
 </body>
