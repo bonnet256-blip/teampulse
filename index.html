@@ -135,6 +135,23 @@
   .setup-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
   .step-num{width:28px;height:28px;background:var(--ink);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
   .step-text{font-size:14px;line-height:1.6;flex:1;}
+
+  /* ACTIONS ALERTES */
+  .alert-card { position: relative; }
+  .alert-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-done { flex:1; padding: 8px; background: #e8f5ee; border: none; border-radius: 8px; color: var(--green); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-done:hover { background: var(--green); color: white; }
+  .btn-ko { flex:1; padding: 8px; background: #fdecea; border: none; border-radius: 8px; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-ko:hover { background: var(--accent); color: white; }
+  /* MODAL ENTRETIEN EDIT */
+  .modal-big { background: var(--card); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; }
+  /* MODAL KO REASON */
+  .ko-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .ko-overlay.active { display: flex; }
+  .ko-box { background: var(--card); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 400px; }
+  .ko-box h3 { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 12px; }
+  .ko-box textarea { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--faint); font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--paper); outline: none; min-height: 80px; resize: vertical; margin-bottom: 12px; color: var(--ink); }
+  .ko-actions { display: flex; gap: 10px; }
 </style>
 </head>
 <body>
@@ -241,6 +258,49 @@
       <div class="form-group"><label>Date de naissance (JJ/MM)</label><input type="text" id="nc-naissance" placeholder="14/03"></div>
       <div class="form-group"><label>Infos personnelles à retenir</label><textarea id="nc-perso" placeholder="Passions, famille, ce qui lui tient à cœur..." style="min-height:70px;"></textarea></div>
       <button class="submit-btn" onclick="ajouterCollab()">➕ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL EDITER ENTRETIEN -->
+<div class="modal-overlay" id="modal-edit-entretien">
+  <div class="modal modal-big">
+    <div class="modal-title">✏️ Modifier l'entretien</div>
+    <input type="hidden" id="edit-entretien-id">
+    <input type="hidden" id="edit-entretien-collab-id">
+    <div class="form-group"><label>Date</label><input type="date" id="edit-entretien-date"></div>
+    <div class="form-group"><label>Notes</label><textarea id="edit-entretien-contenu" style="min-height:120px;"></textarea></div>
+    <div class="form-group">
+      <label>Thèmes</label>
+      <div class="tag-selector" id="edit-tag-selector">
+        <button class="tag-btn" onclick="toggleEditTag(this,'motivation')">💪 Motivation</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'tension')">⚠️ Tension</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'perso')">👤 Vie perso</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'objectif')">🎯 Objectif</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'formation')">📚 Formation</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'qualite')">✅ Qualité</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'conge')">🏖️ Congés</button>
+        <button class="tag-btn" onclick="toggleEditTag(this,'sante')">❤️ Santé</button>
+      </div>
+    </div>
+    <div class="form-group"><label>✨ Détail à retenir</label><input type="text" id="edit-entretien-detail"></div>
+    <div class="form-group"><label>Action à faire</label><input type="text" id="edit-entretien-action"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModalEntretien()">Annuler</button>
+      <button class="btn-save" onclick="sauvegarderEntretien()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KO RAISON -->
+<div class="ko-overlay" id="ko-overlay">
+  <div class="ko-box">
+    <h3>❌ Pourquoi tu ne feras pas cette action ?</h3>
+    <textarea id="ko-reason" placeholder="Ex: Plus d'actualité, situation réglée, délégué à quelqu'un d'autre..."></textarea>
+    <div class="ko-actions">
+      <button class="btn-cancel" onclick="closeKO()">Annuler</button>
+      <button class="btn-save" onclick="confirmerKO()">Valider</button>
     </div>
   </div>
 </div>
@@ -396,12 +456,17 @@ function renderAlertes(alertes) {
     return;
   }
   const typeClass = { anniversaire: 'success', action: 'info' };
-  div.innerHTML = alertes.map(a => `
-    <div class="alert-card ${typeClass[a.type]||''}">
+  div.innerHTML = alertes.map((a, i) => `
+    <div class="alert-card ${typeClass[a.type]||''}" id="alert-${i}">
       <div class="alert-icon">${a.icone}</div>
-      <div>
+      <div style="flex:1">
         <div class="alert-title">${a.titre}</div>
         <div class="alert-desc">${a.desc}</div>
+        ${a.type === 'action' ? `
+        <div class="alert-btns">
+          <button class="btn-done" onclick="actionFaite(${i}, '${a.collabId}')">✅ C'est fait !</button>
+          <button class="btn-ko" onclick="actionKO(${i}, '${a.collabId}')">❌ Je ne ferai pas</button>
+        </div>` : ''}
       </div>
     </div>`).join('');
 }
@@ -528,6 +593,9 @@ function openDetail(id) {
           ${e.detailRetenir ? `<div style="margin-top:8px;font-size:13px;background:#fef9e7;padding:8px 10px;border-radius:8px;">✨ ${e.detailRetenir}</div>` : ''}
           ${e.actionAFaire ? `<div style="margin-top:6px;font-size:13px;background:#e8eef5;padding:8px 10px;border-radius:8px;">🎯 ${e.actionAFaire}</div>` : ''}
           <div class="tl-tags">${(e.tags||'').split(',').filter(Boolean).map(t=>`<span class="tl-tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
+          <div style="margin-top:10px;text-align:right;">
+            <button class="btn-edit" style="font-size:12px;padding:6px 12px;width:auto;border-radius:8px;" onclick="ouvrirEditEntretien('${e.id}','${e.collabId}')">✏️ Modifier</button>
+          </div>
         </div>`).join('')
     : '<div class="loading">Aucun entretien enregistré</div>';
 
@@ -693,6 +761,109 @@ function setSyncStatus(text, cls) {
   const el = document.getElementById('sync-indicator');
   el.textContent = text;
   el.className = 'sync-status ' + cls;
+}
+
+
+// ============================================================
+// EDIT ENTRETIEN
+// ============================================================
+let selectedEditTags = [];
+let currentAlertIndex = null;
+let currentAlertCollabId = null;
+
+function ouvrirEditEntretien(entretienId, collabId) {
+  const e = entretiensData.find(x => x.id === entretienId);
+  if (!e) return;
+  document.getElementById('edit-entretien-id').value = e.id;
+  document.getElementById('edit-entretien-collab-id').value = e.collabId;
+  document.getElementById('edit-entretien-date').value = e.date ? e.date.split('T')[0] : '';
+  document.getElementById('edit-entretien-contenu').value = e.contenu || '';
+  document.getElementById('edit-entretien-detail').value = e.detailRetenir || '';
+  document.getElementById('edit-entretien-action').value = e.actionAFaire || '';
+  selectedEditTags = (e.tags || '').split(',').filter(Boolean);
+  document.querySelectorAll('#edit-tag-selector .tag-btn').forEach(btn => {
+    const tag = btn.getAttribute('onclick').match(/'([^']+)'\)/)[1];
+    btn.classList.toggle('selected', selectedEditTags.includes(tag));
+  });
+  document.getElementById('modal-edit-entretien').classList.add('active');
+}
+
+function closeModalEntretien() {
+  document.getElementById('modal-edit-entretien').classList.remove('active');
+}
+
+function toggleEditTag(btn, tag) {
+  btn.classList.toggle('selected');
+  if (selectedEditTags.includes(tag)) selectedEditTags = selectedEditTags.filter(t=>t!==tag);
+  else selectedEditTags.push(tag);
+}
+
+async function sauvegarderEntretien() {
+  const id = document.getElementById('edit-entretien-id').value;
+  const collabId = document.getElementById('edit-entretien-collab-id').value;
+  try {
+    await callScript('updateEntretien', { data: {
+      id,
+      collabId,
+      date: document.getElementById('edit-entretien-date').value,
+      contenu: document.getElementById('edit-entretien-contenu').value,
+      tags: selectedEditTags,
+      detailRetenir: document.getElementById('edit-entretien-detail').value,
+      actionAFaire: document.getElementById('edit-entretien-action').value,
+    }});
+    closeModalEntretien();
+    showToast('✅ Entretien mis à jour !');
+    await loadAll();
+    openDetail(collabId);
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// ============================================================
+// ACTIONS ALERTES — FAIT / KO
+// ============================================================
+async function actionFaite(index, collabId) {
+  const card = document.getElementById('alert-' + index);
+  if (card) {
+    card.style.opacity = '0.4';
+    card.style.pointerEvents = 'none';
+  }
+  try {
+    await callScript('marquerActionFaite', { collabId });
+    showToast('✅ Action marquée comme faite !');
+    await loadAll();
+  } catch(e) {
+    showToast('✅ Noté localement !');
+    if (card) card.remove();
+  }
+}
+
+function actionKO(index, collabId) {
+  currentAlertIndex = index;
+  currentAlertCollabId = collabId;
+  document.getElementById('ko-reason').value = '';
+  document.getElementById('ko-overlay').classList.add('active');
+}
+
+function closeKO() {
+  document.getElementById('ko-overlay').classList.remove('active');
+  currentAlertIndex = null;
+  currentAlertCollabId = null;
+}
+
+async function confirmerKO() {
+  const reason = document.getElementById('ko-reason').value.trim();
+  if (!reason) { showToast('⚠️ Indique une raison'); return; }
+  const card = document.getElementById('alert-' + currentAlertIndex);
+  try {
+    await callScript('marquerActionKO', { collabId: currentAlertCollabId, raison: reason });
+    showToast('❌ Action annulée — raison notée');
+    closeKO();
+    await loadAll();
+  } catch(e) {
+    showToast('❌ Noté : ' + reason);
+    if (card) card.remove();
+    closeKO();
+  }
 }
 
 // Init
