@@ -255,7 +255,7 @@
       <div class="form-group"><label>Poste</label><input type="text" id="nc-poste" placeholder="Ex : Opérateur couture"></div>
       <div class="form-group"><label>Ancienneté</label><input type="text" id="nc-anciennete" placeholder="Ex : 3 ans"></div>
       <div class="form-group"><label>Équipe</label><select id="nc-equipe"><option value="">Sélectionner...</option><option value="Matin">🌅 Matin</option><option value="Journée">☀️ Journée</option><option value="Après-midi">🌆 Après-midi</option></select></div>
-      <div class="form-group"><label>Date de naissance (JJ/MM)</label><input type="text" id="nc-naissance" placeholder="14/03"></div>
+      <div class="form-group"><label>🎂 Anniversaire</label><input type="text" id="nc-naissance" placeholder="Ex : 22 janvier, 14 mars..."></div>
       <div class="form-group"><label>Infos personnelles à retenir</label><textarea id="nc-perso" placeholder="Passions, famille, ce qui lui tient à cœur..." style="min-height:70px;"></textarea></div>
       <button class="submit-btn" onclick="ajouterCollab()">➕ Ajouter</button>
     </div>
@@ -344,7 +344,7 @@
     <div class="form-group"><label>Poste</label><input type="text" id="edit-poste"></div>
     <div class="form-group"><label>Ancienneté</label><input type="text" id="edit-anciennete"></div>
     <div class="form-group"><label>Équipe</label><select id="edit-equipe"><option value="">Sélectionner...</option><option value="Matin">🌅 Matin</option><option value="Journée">☀️ Journée</option><option value="Après-midi">🌆 Après-midi</option></select></div>
-    <div class="form-group"><label>Date de naissance (JJ/MM)</label><input type="text" id="edit-naissance"></div>
+    <div class="form-group"><label>🎂 Anniversaire</label><input type="text" id="edit-naissance" placeholder="Ex : 22 janvier, 14 mars..."></div>
     <div class="form-group"><label>Infos personnelles à retenir</label><textarea id="edit-perso" style="min-height:100px;"></textarea></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Annuler</button>
@@ -493,7 +493,12 @@ function ouvrirModif(id) {
   document.getElementById('edit-nom').value = c.nom || '';
   document.getElementById('edit-poste').value = c.poste || '';
   document.getElementById('edit-anciennete').value = c.anciennete || '';
-  document.getElementById('edit-naissance').value = c.dateNaissance || '';
+  // Extraire l'anniversaire depuis infosPerso ou dateNaissance
+  const annivMatch = (c.infosPerso || '').match(/🎂 Anniversaire : ([^.]+)/);
+  document.getElementById('edit-naissance').value = annivMatch ? annivMatch[1].trim() : (c.dateNaissance || '');
+  // Afficher infosPerso sans la partie anniversaire dans le champ texte
+  const persoSansAnniv = (c.infosPerso || '').replace(/🎂 Anniversaire : [^.]+\.?\s*/g, '').trim();
+  document.getElementById('edit-perso').value = persoSansAnniv;
   document.getElementById('edit-equipe').value = c.equipe || '';
   document.getElementById('edit-perso').value = c.infosPerso || '';
   document.getElementById('modal-edit').classList.add('active');
@@ -508,14 +513,21 @@ async function sauvegarderModif() {
   const nom = document.getElementById('edit-nom').value.trim();
   if (!nom) { showToast('⚠️ Nom requis'); return; }
   try {
+    const editNaissance = document.getElementById('edit-naissance').value.trim();
+    const editPerso = document.getElementById('edit-perso').value.trim();
+    // Si infosPerso contient déjà l'anniversaire, on le remplace
+    let editInfosFinal = editPerso.replace(/🎂 Anniversaire : [^.]+\.?\s*/g, '').trim();
+    if (editNaissance) {
+      editInfosFinal = '🎂 Anniversaire : ' + editNaissance + (editInfosFinal ? '. ' + editInfosFinal : '');
+    }
     await callScript('saveCollab', { data: {
       id,
       nom,
       poste: document.getElementById('edit-poste').value,
       anciennete: document.getElementById('edit-anciennete').value,
       equipe: document.getElementById('edit-equipe').value,
-      dateNaissance: document.getElementById('edit-naissance').value,
-      infosPerso: document.getElementById('edit-perso').value,
+      dateNaissance: editNaissance,
+      infosPerso: editInfosFinal,
       avatarInitiale: nom[0].toUpperCase(),
     }});
     closeModal();
@@ -668,13 +680,18 @@ async function ajouterCollab() {
   const nom = document.getElementById('nc-nom').value.trim();
   if (!nom) { showToast('⚠️ Nom requis'); return; }
   try {
+    const naissance = document.getElementById('nc-naissance').value.trim();
+    const perso = document.getElementById('nc-perso').value.trim();
+    const infosPersoFinal = naissance
+      ? '🎂 Anniversaire : ' + naissance + (perso ? '. ' + perso : '')
+      : perso;
     await callScript('saveCollab', { data: {
       nom,
       poste: document.getElementById('nc-poste').value,
       anciennete: document.getElementById('nc-anciennete').value,
       equipe: document.getElementById('nc-equipe').value,
-      dateNaissance: document.getElementById('nc-naissance').value,
-      infosPerso: document.getElementById('nc-perso').value,
+      dateNaissance: naissance,
+      infosPerso: infosPersoFinal,
       avatarInitiale: nom[0].toUpperCase(),
     }});
     showToast('✅ ' + nom + ' ajouté !');
