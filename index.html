@@ -822,19 +822,22 @@ async function sauvegarderEntretien() {
 // ACTIONS ALERTES — FAIT / KO
 // ============================================================
 async function actionFaite(index, collabId) {
+  // Suppression immédiate visuelle
   const card = document.getElementById('alert-' + index);
   if (card) {
-    card.style.opacity = '0.4';
-    card.style.pointerEvents = 'none';
+    card.style.transition = 'all 0.3s';
+    card.style.opacity = '0';
+    card.style.maxHeight = card.offsetHeight + 'px';
+    setTimeout(() => {
+      card.style.maxHeight = '0';
+      card.style.padding = '0';
+      card.style.margin = '0';
+      setTimeout(() => card.remove(), 300);
+    }, 200);
   }
-  try {
-    await callScript('marquerActionFaite', { collabId });
-    showToast('✅ Action marquée comme faite !');
-    await loadAll();
-  } catch(e) {
-    showToast('✅ Noté localement !');
-    if (card) card.remove();
-  }
+  showToast('✅ Action marquée comme faite !');
+  // Synchro en arrière-plan
+  callScript('marquerActionFaite', { collabId }).catch(() => {});
 }
 
 function actionKO(index, collabId) {
@@ -853,17 +856,23 @@ function closeKO() {
 async function confirmerKO() {
   const reason = document.getElementById('ko-reason').value.trim();
   if (!reason) { showToast('⚠️ Indique une raison'); return; }
+  // Suppression immédiate visuelle
   const card = document.getElementById('alert-' + currentAlertIndex);
-  try {
-    await callScript('marquerActionKO', { collabId: currentAlertCollabId, raison: reason });
-    showToast('❌ Action annulée — raison notée');
-    closeKO();
-    await loadAll();
-  } catch(e) {
-    showToast('❌ Noté : ' + reason);
-    if (card) card.remove();
-    closeKO();
+  if (card) {
+    card.style.transition = 'all 0.3s';
+    card.style.opacity = '0';
+    card.style.maxHeight = card.offsetHeight + 'px';
+    setTimeout(() => {
+      card.style.maxHeight = '0';
+      card.style.padding = '0';
+      card.style.margin = '0';
+      setTimeout(() => card.remove(), 300);
+    }, 200);
   }
+  showToast('❌ Action annulée — raison notée');
+  closeKO();
+  // Synchro en arrière-plan
+  callScript('marquerActionKO', { collabId: currentAlertCollabId, raison: reason }).catch(() => {});
 }
 
 // Init
