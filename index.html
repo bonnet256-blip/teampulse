@@ -610,6 +610,23 @@ function closeDetail() {
   document.getElementById('main-fab').style.display = 'flex';
 }
 
+function formaterDate(dateStr) {
+  if (!dateStr) return '';
+  const str = dateStr.toString().trim();
+  const mois = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  // Format ISO AAAA-MM-DD ou timestamp
+  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return iso[3] + ' ' + mois[parseInt(iso[2])-1];
+  // Format JJ/MM/AAAA
+  const full = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (full) return full[1] + ' ' + mois[parseInt(full[2])-1];
+  // Format JJ/MM
+  const short = str.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (short) return short[1] + ' ' + mois[parseInt(short[2])-1];
+  // Déjà lisible (ex: "21 aout 1990")
+  return str.substring(0, 12);
+}
+
 function tagLabel(t) {
   const l={motivation:'💪 Motivation',tension:'⚠️ Tension',perso:'👤 Vie perso',objectif:'🎯 Objectif',formation:'📚 Formation',qualite:'✅ Qualité',conge:'🏖️ Congés',sante:'❤️ Santé'};
   return l[t]||t;
