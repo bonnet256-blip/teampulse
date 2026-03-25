@@ -472,14 +472,14 @@ function renderCollabs(list) {
     return `
       <div class="collab-card priority-ok">
         <div class="avatar ${color}">${initial}</div>
-        <div class="collab-card-body" onclick="openDetail('${c.id}')">
+        <div class="collab-card-body" data-id="${c.id}" onclick="openDetail(this.dataset.id)">
           <div class="collab-name">${c.nom}</div>
           <div class="collab-meta">${c.poste || ''} · ${c.anciennete || ''} · ${nbE} entretien${nbE>1?'s':''}</div>
         </div>
         <div class="collab-actions">
-          <button class="btn-bilan" onclick="genererBilan('${c.id}')" title="Bilan annuel">📊</button>
-          <button class="btn-edit" onclick="ouvrirModif('${c.id}')" title="Modifier">✏️</button>
-          <button class="btn-delete" onclick="demanderSuppression('${c.id}')" title="Supprimer">🗑️</button>
+          <button class="btn-bilan" data-id="${c.id}" onclick="genererBilan(this.dataset.id)"" title="Bilan annuel">📊</button>
+          <button class="btn-edit" data-id="${c.id}" onclick="ouvrirModif(this.dataset.id)"" title="Modifier">✏️</button>
+          <button class="btn-delete" data-id="${c.id}" onclick="demanderSuppression(this.dataset.id)"" title="Supprimer">🗑️</button>
         </div>
       </div>`;
   }).join('');
