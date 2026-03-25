@@ -136,6 +136,10 @@
   .stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);}
   .stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
   .loading{text-align:center;padding:32px;color:var(--muted);}
+  .year-filter{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .year-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--faint);background:white;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+  .year-btn.active{background:var(--ink);color:white;border-color:var(--ink);}
+  .year-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
   .setup-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
   .setup-card h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:12px;}
   .setup-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
@@ -225,6 +229,7 @@
 
   <!-- VUE IA -->
   <div class="view" id="view-ia">
+    <div class="year-filter" id="ia-year-filter" style="margin-bottom:4px;"></div>
     <div class="ai-section">
       <label>🤖 Question sur ton équipe</label>
       <div class="ai-input-wrap">
@@ -317,6 +322,7 @@
 <div class="modal-overlay" id="modal-bilan">
   <div class="modal modal-big">
     <div class="modal-title">📊 Bilan annuel</div>
+    <div class="year-filter" id="bilan-year-filter" style="margin-bottom:16px;"></div>
     <div id="bilan-loading" style="text-align:center;padding:40px;display:none;">
       <div class="ai-thinking" style="justify-content:center;margin-bottom:12px;"><span></span><span></span><span></span></div>
       <div style="color:var(--muted);font-size:14px;">Génération du bilan en cours...</div>
@@ -365,6 +371,7 @@
     <div class="section-title">✨ À retenir pour lui faire plaisir</div>
     <div class="form-card" id="detail-perso" style="padding:12px 14px;font-size:14px;line-height:1.6;"></div>
     <div class="section-title">Historique des entretiens</div>
+    <div class="year-filter" id="detail-year-filter"></div>
     <div class="timeline" id="detail-timeline"></div>
   </div>
 </div>
@@ -441,6 +448,7 @@ async function loadAll() {
     renderAlertes(alertes || []);
     updateStats(collabsData, entretiensData, alertes || []);
     updateCollabSelect();
+    renderYearFilter('ia-year-filter', selectedYearIA, setYearIA);
     setSyncStatus('✓ Connecté', 'ok');
   } catch (e) {
     setSyncStatus('✗ Erreur', 'err');
@@ -551,30 +559,30 @@ async function sauvegarderModif() {
   const id = document.getElementById('edit-id').value;
   const nom = document.getElementById('edit-nom').value.trim();
   if (!nom) { showToast('⚠️ Nom requis'); return; }
-  try {
-    const editNaissance = document.getElementById('edit-naissance').value.trim();
-    const editPerso = document.getElementById('edit-perso').value.trim();
-    // Si infosPerso contient déjà l'anniversaire, on le remplace
-    let editInfosFinal = editPerso.replace(/🎂 Anniversaire : [^.]+\.?\s*/g, '').trim();
-    if (editNaissance) {
-      editInfosFinal = '🎂 Anniversaire : ' + editNaissance + (editInfosFinal ? '. ' + editInfosFinal : '');
-    }
-    await callScript('saveCollab', { data: {
-      id,
-      nom,
-      poste: document.getElementById('edit-poste').value,
-      anciennete: document.getElementById('edit-anciennete').value,
-      equipe: document.getElementById('edit-equipe').value,
-      dateNaissance: editNaissance,
-      infosPerso: editInfosFinal,
-      avatarInitiale: nom[0].toUpperCase(),
-    }});
-    closeModal();
-    showToast('✅ ' + nom + ' mis à jour !');
-    await loadAll();
-  } catch(e) {
-    showToast('❌ ' + e.message);
+  const editNaissance = document.getElementById('edit-naissance').value.trim();
+  const editPerso = document.getElementById('edit-perso').value.trim();
+  let editInfosFinal = editPerso.replace(/🎂 Anniversaire : [^.]+\.?\s*/g, '').trim();
+  if (editNaissance) {
+    editInfosFinal = '🎂 Anniversaire : ' + editNaissance + (editInfosFinal ? '. ' + editInfosFinal : '');
   }
+  const data = {
+    id, nom,
+    poste: document.getElementById('edit-poste').value,
+    anciennete: document.getElementById('edit-anciennete').value,
+    equipe: document.getElementById('edit-equipe').value,
+    dateNaissance: editNaissance,
+    infosPerso: editInfosFinal,
+    avatarInitiale: nom[0].toUpperCase(),
+  };
+  // Mise à jour immédiate
+  const idx = collabsData.findIndex(c => c.id === id);
+  if (idx >= 0) collabsData[idx] = { ...collabsData[idx], ...data };
+  renderCollabs(collabsData);
+  updateCollabSelect();
+  closeModal();
+  showToast('✅ ' + nom + ' mis à jour !');
+  // Synchro arrière-plan
+  callScript('saveCollab', { data }).then(() => loadAll()).catch(() => {});
 }
 
 // ============================================================
@@ -596,18 +604,15 @@ function closeConfirm() {
 
 async function confirmerSuppression() {
   if (!collabToDelete) return;
-  try {
-    await callScript('deleteCollab', { collabId: collabToDelete });
-    closeConfirm();
-    showToast('🗑️ Collaborateur supprimé');
-    await loadAll();
-  } catch(e) {
-    // Suppression locale si le script ne supporte pas encore
-    collabsData = collabsData.filter(c => c.id !== collabToDelete);
-    renderCollabs(collabsData);
-    closeConfirm();
-    showToast('🗑️ Supprimé localement — pense à supprimer la ligne dans Google Sheets');
-  }
+  const id = collabToDelete;
+  // Suppression immédiate
+  collabsData = collabsData.filter(c => c.id !== id);
+  renderCollabs(collabsData);
+  updateCollabSelect();
+  closeConfirm();
+  showToast('🗑️ Collaborateur supprimé');
+  // Synchro arrière-plan
+  callScript('deleteCollab', { collabId: id }).then(() => loadAll()).catch(() => {});
 }
 
 // ============================================================
@@ -636,19 +641,9 @@ function openDetail(id) {
     .filter(Boolean).map(c => `<div class="chip">${c}</div>`).join('');
   document.getElementById('detail-chips').innerHTML = chips;
   document.getElementById('detail-perso').textContent = currentCollab.infosPerso || 'Aucune info personnelle enregistrée.';
-  document.getElementById('detail-timeline').innerHTML = sesEntretiens.length
-    ? sesEntretiens.map(e => `
-        <div class="tl-item">
-          <div class="tl-date">📅 ${e.date}</div>
-          <div class="tl-content">${e.contenu}</div>
-          ${e.detailRetenir ? `<div style="margin-top:8px;font-size:13px;background:#fef9e7;padding:8px 10px;border-radius:8px;">✨ ${e.detailRetenir}</div>` : ''}
-          ${e.actionAFaire ? `<div style="margin-top:6px;font-size:13px;background:#e8eef5;padding:8px 10px;border-radius:8px;">🎯 ${e.actionAFaire}</div>` : ''}
-          <div class="tl-tags">${(e.tags||'').split(',').filter(Boolean).map(t=>`<span class="tl-tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
-          <div style="margin-top:10px;text-align:right;">
-            <button class="btn-edit" style="font-size:12px;padding:6px 12px;width:auto;border-radius:8px;" onclick="ouvrirEditEntretien('${e.id}','${e.collabId}')">✏️ Modifier</button>
-          </div>
-        </div>`).join('')
-    : '<div class="loading">Aucun entretien enregistré</div>';
+  selectedYearDetail = new Date().getFullYear();
+  renderYearFilter('detail-year-filter', selectedYearDetail, setYearDetail);
+  renderDetailTimeline();
 
   document.getElementById('ia-detail-input').value = '';
   document.getElementById('ia-detail-response').className = 'ai-response';
@@ -690,27 +685,30 @@ async function saveEntretien() {
   const collabId = document.getElementById('form-collab').value;
   const contenu = document.getElementById('form-content').value;
   if (!collabId || !contenu) { showToast('⚠️ Collaborateur et notes requis'); return; }
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = '⏳ Enregistrement...';
   const collab = collabsData.find(c => c.id === collabId);
-  try {
-    await callScript('saveEntretien', { data: {
-      collabId, collabNom: collab?.nom || '',
-      date: document.getElementById('form-date').value,
-      contenu, tags: selectedTags,
-      detailRetenir: document.getElementById('form-detail').value,
-      actionAFaire: document.getElementById('form-action').value,
-      actionDate: document.getElementById('form-action-date').value,
-    }});
-    showToast('✅ Entretien enregistré !');
-    document.getElementById('form-content').value = '';
-    document.getElementById('form-detail').value = '';
-    document.getElementById('form-action').value = '';
-    selectedTags = [];
-    document.querySelectorAll('.tag-btn.selected').forEach(b => b.classList.remove('selected'));
-    await loadAll();
-  } catch(e) { showToast('❌ ' + e.message); }
-  btn.disabled = false; btn.textContent = '💾 Enregistrer';
+  const newEntretien = {
+    id: 'E' + Date.now(),
+    collabId,
+    collabNom: collab?.nom || '',
+    date: document.getElementById('form-date').value,
+    contenu,
+    tags: selectedTags.join(','),
+    detailRetenir: document.getElementById('form-detail').value,
+    actionAFaire: document.getElementById('form-action').value,
+    actionDate: document.getElementById('form-action-date').value,
+  };
+  // Mise à jour immédiate
+  entretiensData.unshift(newEntretien);
+  showToast('✅ Entretien enregistré !');
+  document.getElementById('form-content').value = '';
+  document.getElementById('form-detail').value = '';
+  document.getElementById('form-action').value = '';
+  document.getElementById('form-action-date').value = '';
+  selectedTags = [];
+  document.querySelectorAll('.tag-btn.selected').forEach(b => b.classList.remove('selected'));
+  // Synchro arrière-plan
+  callScript('saveEntretien', { data: { ...newEntretien, tags: selectedTags } })
+    .then(() => loadAll()).catch(() => {});
 }
 
 // ============================================================
@@ -719,25 +717,30 @@ async function saveEntretien() {
 async function ajouterCollab() {
   const nom = document.getElementById('nc-nom').value.trim();
   if (!nom) { showToast('⚠️ Nom requis'); return; }
-  try {
-    const naissance = document.getElementById('nc-naissance').value.trim();
-    const perso = document.getElementById('nc-perso').value.trim();
-    const infosPersoFinal = naissance
-      ? '🎂 Anniversaire : ' + naissance + (perso ? '. ' + perso : '')
-      : perso;
-    await callScript('saveCollab', { data: {
-      nom,
-      poste: document.getElementById('nc-poste').value,
-      anciennete: document.getElementById('nc-anciennete').value,
-      equipe: document.getElementById('nc-equipe').value,
-      dateNaissance: naissance,
-      infosPerso: infosPersoFinal,
-      avatarInitiale: nom[0].toUpperCase(),
-    }});
-    showToast('✅ ' + nom + ' ajouté !');
-    ['nc-nom','nc-poste','nc-anciennete','nc-naissance','nc-perso'].forEach(id => document.getElementById(id).value = '');
-    await loadAll();
-  } catch(e) { showToast('❌ ' + e.message); }
+  const naissance = document.getElementById('nc-naissance').value.trim();
+  const perso = document.getElementById('nc-perso').value.trim();
+  const infosPersoFinal = naissance
+    ? '🎂 Anniversaire : ' + naissance + (perso ? '. ' + perso : '')
+    : perso;
+  const newCollab = {
+    id: 'C' + Date.now(),
+    nom,
+    poste: document.getElementById('nc-poste').value,
+    anciennete: document.getElementById('nc-anciennete').value,
+    equipe: document.getElementById('nc-equipe').value,
+    dateNaissance: naissance,
+    infosPerso: infosPersoFinal,
+    avatarInitiale: nom[0].toUpperCase(),
+  };
+  // Mise à jour immédiate
+  collabsData.push(newCollab);
+  renderCollabs(collabsData);
+  updateCollabSelect();
+  showToast('✅ ' + nom + ' ajouté !');
+  ['nc-nom','nc-poste','nc-anciennete','nc-naissance','nc-perso'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nc-equipe').value = '';
+  // Synchro arrière-plan
+  callScript('saveCollab', { data: newCollab }).then(() => loadAll()).catch(() => {});
 }
 
 // ============================================================
@@ -752,8 +755,12 @@ async function askIAGlobal() {
   respDiv.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
   try {
     const context = collabsData.map(c => {
-      const es = entretiensData.filter(e=>e.collabId===c.id).slice(0,3).map(e=>`[${e.date}] ${e.contenu}`).join(' | ');
-      return `${c.nom} (${c.poste}, équipe ${c.equipe||'non renseignée'}) — ${c.infosPerso} — ${es||'aucun entretien'}`;
+      const es = entretiensData
+        .filter(e => e.collabId === c.id && e.date && new Date(e.date).getFullYear() === selectedYearIA)
+        .slice(0, 5)
+        .map(e => `[${e.date ? e.date.split('T')[0] : ''}] ${e.contenu}`)
+        .join(' | ');
+      return `${c.nom} (${c.poste}, équipe ${c.equipe||'?'}) — ${c.infosPerso||''} — Entretiens ${selectedYearIA}: ${es||'aucun'}`;
     }).join('\n');
     const result = await callScript('askClaude', { question, context });
     respDiv.innerHTML = result.replace(/\n/g,'<br>');
@@ -839,6 +846,77 @@ function setSyncStatus(text, cls) {
 
 
 
+
+// ============================================================
+// FILTRE PAR ANNÉE
+// ============================================================
+let selectedYearDetail = new Date().getFullYear();
+let selectedYearIA = new Date().getFullYear();
+let selectedYearBilan = new Date().getFullYear();
+
+function getAvailableYears() {
+  const years = new Set();
+  years.add(new Date().getFullYear());
+  entretiensData.forEach(e => {
+    if (e.date) {
+      const y = new Date(e.date).getFullYear();
+      if (!isNaN(y)) years.add(y);
+    }
+  });
+  return Array.from(years).sort((a,b) => b - a);
+}
+
+function renderYearFilter(containerId, selectedYear, onSelect) {
+  const div = document.getElementById(containerId);
+  if (!div) return;
+  const years = getAvailableYears();
+  div.innerHTML = '<span class="year-label">Année :</span>' +
+    years.map(y => `<button class="year-btn ${y === selectedYear ? 'active' : ''}" onclick="(${onSelect.toString()})(${y})">${y}</button>`).join('');
+}
+
+function setYearDetail(year) {
+  selectedYearDetail = year;
+  renderYearFilter('detail-year-filter', selectedYearDetail, setYearDetail);
+  renderDetailTimeline();
+}
+
+function setYearIA(year) {
+  selectedYearIA = year;
+  renderYearFilter('ia-year-filter', selectedYearIA, setYearIA);
+}
+
+function setYearBilan(year) {
+  selectedYearBilan = year;
+  renderYearFilter('bilan-year-filter', selectedYearBilan, setYearBilan);
+}
+
+function renderDetailTimeline() {
+  if (!currentCollab) return;
+  const sesEntretiens = entretiensData
+    .filter(e => e.collabId === currentCollab.id)
+    .filter(e => {
+      if (!e.date) return false;
+      const y = new Date(e.date).getFullYear();
+      return y === selectedYearDetail;
+    })
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  const tl = document.getElementById('detail-timeline');
+  tl.innerHTML = sesEntretiens.length
+    ? sesEntretiens.map(e => `
+        <div class="tl-item">
+          <div class="tl-date">📅 ${e.date ? e.date.split('T')[0] : e.date}</div>
+          <div class="tl-content">${e.contenu}</div>
+          ${e.detailRetenir ? `<div style="margin-top:8px;font-size:13px;background:#fef9e7;padding:8px 10px;border-radius:8px;">✨ ${e.detailRetenir}</div>` : ''}
+          ${e.actionAFaire ? `<div style="margin-top:6px;font-size:13px;background:#e8eef5;padding:8px 10px;border-radius:8px;">🎯 ${e.actionAFaire}${e.actionDate ? ' — 📅 ' + e.actionDate.split('T')[0] : ''}</div>` : ''}
+          <div class="tl-tags">${(e.tags||'').split(',').filter(Boolean).map(t=>`<span class="tl-tag ${t}">${tagLabel(t)}</span>`).join('')}</div>
+          <div style="margin-top:10px;text-align:right;">
+            <button class="btn-edit" style="font-size:12px;padding:6px 12px;width:auto;border-radius:8px;" onclick="ouvrirEditEntretien('${e.id}','${e.collabId}')">✏️ Modifier</button>
+          </div>
+        </div>`).join('')
+    : `<div class="loading">Aucun entretien en ${selectedYearDetail}</div>`;
+}
+
 // ============================================================
 // BILAN ANNUEL
 // ============================================================
@@ -857,7 +935,8 @@ async function genererBilan(collabId) {
   document.getElementById('bilan-mail-status').textContent = '';
 
   try {
-    const result = await callScript('genererBilan', { collabId });
+    renderYearFilter('bilan-year-filter', selectedYearBilan, setYearBilan);
+  const result = await callScript('genererBilan', { collabId, annee: selectedYearBilan });
     currentBilanTexte = result.bilan || 'Bilan indisponible';
 
     document.getElementById('bilan-loading').style.display = 'none';
@@ -939,22 +1018,23 @@ function toggleEditTag(btn, tag) {
 async function sauvegarderEntretien() {
   const id = document.getElementById('edit-entretien-id').value;
   const collabId = document.getElementById('edit-entretien-collab-id').value;
-  try {
-    await callScript('updateEntretien', { data: {
-      id,
-      collabId,
-      date: document.getElementById('edit-entretien-date').value,
-      contenu: document.getElementById('edit-entretien-contenu').value,
-      tags: selectedEditTags,
-      detailRetenir: document.getElementById('edit-entretien-detail').value,
-      actionAFaire: document.getElementById('edit-entretien-action').value,
-      actionDate: document.getElementById('edit-entretien-action-date').value,
-    }});
-    closeModalEntretien();
-    showToast('✅ Entretien mis à jour !');
-    await loadAll();
-    openDetail(collabId);
-  } catch(e) { showToast('❌ ' + e.message); }
+  const data = {
+    id, collabId,
+    date: document.getElementById('edit-entretien-date').value,
+    contenu: document.getElementById('edit-entretien-contenu').value,
+    tags: selectedEditTags,
+    detailRetenir: document.getElementById('edit-entretien-detail').value,
+    actionAFaire: document.getElementById('edit-entretien-action').value,
+    actionDate: document.getElementById('edit-entretien-action-date').value,
+  };
+  // Mise à jour immédiate dans le cache local
+  const idx = entretiensData.findIndex(e => e.id === id);
+  if (idx >= 0) entretiensData[idx] = { ...entretiensData[idx], ...data, tags: selectedEditTags.join(',') };
+  closeModalEntretien();
+  showToast('✅ Entretien mis à jour !');
+  renderDetailTimeline();
+  // Synchro arrière-plan
+  callScript('updateEntretien', { data }).then(() => loadAll()).catch(() => {});
 }
 
 // ============================================================
