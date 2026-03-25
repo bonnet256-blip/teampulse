@@ -517,8 +517,9 @@ function renderAlertes(alertes) {
 // ===== DETAIL =====
 function openDetail(id) {
   currentCollab = null;
+  var idStr = String(id);
   for (var i = 0; i < collabsData.length; i++) {
-    if (collabsData[i].id === id) { currentCollab = collabsData[i]; break; }
+    if (String(collabsData[i].id) === idStr) { currentCollab = collabsData[i]; break; }
   }
   if (!currentCollab) return;
 
@@ -593,8 +594,9 @@ function tagLabel(t) {
 // ===== MODIFIER COLLAB =====
 function ouvrirModif(id) {
   var c = null;
+  var idStr = String(id);
   for (var i = 0; i < collabsData.length; i++) {
-    if (collabsData[i].id === id) { c = collabsData[i]; break; }
+    if (String(collabsData[i].id) === idStr) { c = collabsData[i]; break; }
   }
   if (!c) return;
   document.getElementById('edit-id').value = c.id;
@@ -629,15 +631,22 @@ async function sauvegarderModif() {
     avatarInitiale: nom.charAt(0).toUpperCase(),
   };
   closeModal();
-  showToast('✅ ' + nom + ' mis à jour !');
-  callScript('saveCollab', { data: data }).then(function(){ loadAll(); }).catch(function(){});
+  showToast('⏳ Mise à jour...');
+  try {
+    await callScript('saveCollab', { data: data });
+    showToast('✅ ' + nom + ' mis à jour !');
+    await loadAll();
+  } catch(e) {
+    showToast('❌ Erreur : ' + e.message);
+  }
 }
 
 // ===== SUPPRIMER COLLAB =====
 function demanderSuppression(id) {
   var c = null;
+  var idStr = String(id);
   for (var i = 0; i < collabsData.length; i++) {
-    if (collabsData[i].id === id) { c = collabsData[i]; break; }
+    if (String(collabsData[i].id) === idStr) { c = collabsData[i]; break; }
   }
   if (!c) return;
   collabToDelete = id;
@@ -650,12 +659,15 @@ function closeConfirm() { document.getElementById('confirm-delete').classList.re
 async function confirmerSuppression() {
   if (!collabToDelete) return;
   var id = collabToDelete;
-  collabsData = collabsData.filter(function(c){ return c.id !== id; });
-  renderCollabs(collabsData);
-  updateCollabSelect();
   closeConfirm();
-  showToast('🗑️ Collaborateur supprimé');
-  callScript('deleteCollab', { collabId: id }).then(function(){ loadAll(); }).catch(function(){});
+  showToast('🗑️ Suppression en cours...');
+  try {
+    await callScript('deleteCollab', { collabId: id });
+    showToast('🗑️ Collaborateur supprimé !');
+    await loadAll();
+  } catch(e) {
+    showToast('❌ Erreur : ' + e.message);
+  }
 }
 
 // ===== AJOUTER COLLAB =====
@@ -785,8 +797,9 @@ function confirmerKO() {
 // ===== BILAN =====
 async function genererBilan(collabId) {
   currentBilanCollab = null;
+  var idStr = String(collabId);
   for (var i = 0; i < collabsData.length; i++) {
-    if (collabsData[i].id === collabId) { currentBilanCollab = collabsData[i]; break; }
+    if (String(collabsData[i].id) === idStr) { currentBilanCollab = collabsData[i]; break; }
   }
   if (!currentBilanCollab) return;
   document.getElementById('modal-bilan').classList.add('active');
