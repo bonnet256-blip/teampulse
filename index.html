@@ -39,6 +39,8 @@
   .collab-actions{display:flex;gap:6px;flex-shrink:0;}
   .btn-edit{background:#e8eef5;border:none;color:var(--accent2);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
   .btn-delete{background:#fdecea;border:none;color:var(--accent);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .btn-bilan{background:#f0e8f5;border:none;color:#8c2ac8;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .btn-bilan:hover{background:#8c2ac8;color:white;}
   .collab-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500;}
   .badge-alert{background:#fdecea;color:var(--accent);}
   .badge-ok{background:#e8f5ee;color:var(--green);}
@@ -305,6 +307,32 @@
   </div>
 </div>
 
+<!-- MODAL BILAN -->
+<div class="modal-overlay" id="modal-bilan">
+  <div class="modal modal-big">
+    <div class="modal-title">📊 Bilan annuel</div>
+    <div id="bilan-loading" style="text-align:center;padding:40px;display:none;">
+      <div class="ai-thinking" style="justify-content:center;margin-bottom:12px;"><span></span><span></span><span></span></div>
+      <div style="color:var(--muted);font-size:14px;">Génération du bilan en cours...</div>
+    </div>
+    <div id="bilan-content" style="display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div class="avatar av-purple" id="bilan-avatar" style="width:48px;height:48px;font-size:20px;flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:18px;font-weight:600;" id="bilan-nom"></div>
+          <div style="font-size:13px;color:var(--muted);" id="bilan-poste"></div>
+        </div>
+      </div>
+      <div id="bilan-texte" style="font-size:14px;line-height:1.8;white-space:pre-wrap;background:var(--paper);padding:16px;border-radius:12px;max-height:50vh;overflow-y:auto;"></div>
+      <div style="margin-top:16px;padding:12px;background:#e8f5ee;border-radius:10px;font-size:13px;color:var(--green);" id="bilan-mail-status"></div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn-cancel" onclick="closeModalBilan()">Fermer</button>
+      <button class="btn-save" id="bilan-mail-btn" onclick="envoyerBilanMail()" style="display:none;">📧 Envoyer par mail</button>
+    </div>
+  </div>
+</div>
+
 <!-- DETAIL PANEL -->
 <div id="detail-view">
   <div class="detail-header">
@@ -435,6 +463,7 @@ function renderCollabs(list) {
           <div class="collab-meta">${c.poste || ''} · ${c.anciennete || ''} · ${nbE} entretien${nbE>1?'s':''}</div>
         </div>
         <div class="collab-actions">
+          <button class="btn-bilan" onclick="genererBilan('${c.id}')" title="Bilan annuel">📊</button>
           <button class="btn-edit" onclick="ouvrirModif('${c.id}')" title="Modifier">✏️</button>
           <button class="btn-delete" onclick="demanderSuppression('${c.id}')" title="Supprimer">🗑️</button>
         </div>
@@ -797,6 +826,69 @@ function setSyncStatus(text, cls) {
   el.className = 'sync-status ' + cls;
 }
 
+
+
+// ============================================================
+// BILAN ANNUEL
+// ============================================================
+let currentBilanCollab = null;
+let currentBilanTexte = '';
+
+async function genererBilan(collabId) {
+  currentBilanCollab = collabsData.find(c => c.id === collabId);
+  if (!currentBilanCollab) return;
+
+  // Ouvrir la modal
+  document.getElementById('modal-bilan').classList.add('active');
+  document.getElementById('bilan-loading').style.display = 'block';
+  document.getElementById('bilan-content').style.display = 'none';
+  document.getElementById('bilan-mail-btn').style.display = 'none';
+  document.getElementById('bilan-mail-status').textContent = '';
+
+  try {
+    const result = await callScript('genererBilan', { collabId });
+    currentBilanTexte = result.bilan || 'Bilan indisponible';
+
+    document.getElementById('bilan-loading').style.display = 'none';
+    document.getElementById('bilan-content').style.display = 'block';
+    document.getElementById('bilan-avatar').textContent = (currentBilanCollab.nom||'?')[0].toUpperCase();
+    document.getElementById('bilan-nom').textContent = currentBilanCollab.nom;
+    document.getElementById('bilan-poste').textContent = (currentBilanCollab.poste||'') + ' · ' + (currentBilanCollab.equipe||'');
+    document.getElementById('bilan-texte').textContent = currentBilanTexte;
+    document.getElementById('bilan-mail-btn').style.display = 'block';
+  } catch(e) {
+    document.getElementById('bilan-loading').style.display = 'none';
+    document.getElementById('bilan-content').style.display = 'block';
+    document.getElementById('bilan-texte').textContent = '❌ Erreur : ' + e.message;
+  }
+}
+
+async function envoyerBilanMail() {
+  if (!currentBilanCollab) return;
+  const btn = document.getElementById('bilan-mail-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Envoi...';
+  try {
+    await callScript('envoyerBilanParMail', {
+      collabId: currentBilanCollab.id,
+      bilan: currentBilanTexte,
+    });
+    document.getElementById('bilan-mail-status').textContent = '✅ Bilan envoyé sur bonnet256@gmail.com !';
+    btn.textContent = '✅ Envoyé !';
+  } catch(e) {
+    document.getElementById('bilan-mail-status').textContent = '❌ Erreur envoi : ' + e.message;
+    document.getElementById('bilan-mail-status').style.background = '#fdecea';
+    document.getElementById('bilan-mail-status').style.color = 'var(--accent)';
+    btn.disabled = false;
+    btn.textContent = '📧 Réessayer';
+  }
+}
+
+function closeModalBilan() {
+  document.getElementById('modal-bilan').classList.remove('active');
+  currentBilanCollab = null;
+  currentBilanTexte = '';
+}
 
 // ============================================================
 // EDIT ENTRETIEN
