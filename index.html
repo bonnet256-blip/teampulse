@@ -417,6 +417,10 @@ async function loadAll() {
 // ===== RENDER COLLABS =====
 var _currentList = [];
 
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function renderCollabs(list) {
   var grid = document.getElementById('collab-grid');
   _currentList = list || [];
@@ -424,7 +428,7 @@ function renderCollabs(list) {
     grid.innerHTML = '<div class="loading">Aucun collaborateur.<br>Ajoute-en un dans ⚙️ Config</div>';
     return;
   }
-  var html = '';
+  var frag = document.createDocumentFragment();
   for (var i = 0; i < _currentList.length; i++) {
     var c = _currentList[i];
     var nbE = 0;
@@ -437,19 +441,28 @@ function renderCollabs(list) {
     }
     var color = 'av-' + colorIdx;
     var initial = (c.nom || '?').charAt(0).toUpperCase();
-    html += '<div class="collab-card">';
-    html += '<div class="avatar ' + color + '">' + initial + '</div>';
-    html += '<div class="collab-card-body" onclick="openDetail('' + c.id + '')">';
-    html += '<div class="collab-name">' + c.nom + '</div>';
-    html += '<div class="collab-meta">' + (c.poste || '') + ' · ' + (c.equipe || '') + ' · ' + nbE + ' entretien' + (nbE > 1 ? 's' : '') + '</div>';
-    html += '</div>';
-    html += '<div class="collab-actions">';
-    html += '<button class="btn-sm btn-bilan" onclick="genererBilan('' + c.id + '')" title="Bilan">📊</button>';
-    html += '<button class="btn-sm btn-edit" onclick="ouvrirModif('' + c.id + '')" title="Modifier">✏️</button>';
-    html += '<button class="btn-sm btn-delete" onclick="demanderSuppression('' + c.id + '')" title="Supprimer">🗑️</button>';
-    html += '</div></div>';
+    var card = document.createElement('div');
+    card.className = 'collab-card';
+    card.innerHTML = '<div class="avatar ' + color + '">' + initial + '</div>' +
+      '<div class="collab-card-body">' +
+        '<div class="collab-name">' + escHtml(c.nom) + '</div>' +
+        '<div class="collab-meta">' + escHtml(c.poste || '') + ' · ' + escHtml(c.equipe || '') + ' · ' + nbE + ' entretien' + (nbE > 1 ? 's' : '') + '</div>' +
+      '</div>' +
+      '<div class="collab-actions">' +
+        '<button class="btn-sm btn-bilan" title="Bilan">📊</button>' +
+        '<button class="btn-sm btn-edit" title="Modifier">✏️</button>' +
+        '<button class="btn-sm btn-delete" title="Supprimer">🗑️</button>' +
+      '</div>';
+    (function(id) {
+      card.querySelector('.collab-card-body').addEventListener('click', function(){ openDetail(id); });
+      card.querySelector('.btn-bilan').addEventListener('click', function(){ genererBilan(id); });
+      card.querySelector('.btn-edit').addEventListener('click', function(){ ouvrirModif(id); });
+      card.querySelector('.btn-delete').addEventListener('click', function(){ demanderSuppression(id); });
+    })(c.id);
+    frag.appendChild(card);
   }
-  grid.innerHTML = html;
+  grid.innerHTML = '';
+  grid.appendChild(frag);
 }
 
 function filterCollabs() {
