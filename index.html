@@ -415,32 +415,38 @@ async function loadAll() {
 }
 
 // ===== RENDER COLLABS =====
+var _currentList = [];
+
 function renderCollabs(list) {
   var grid = document.getElementById('collab-grid');
-  if (!list || !list.length) {
+  _currentList = list || [];
+  if (!_currentList.length) {
     grid.innerHTML = '<div class="loading">Aucun collaborateur.<br>Ajoute-en un dans ⚙️ Config</div>';
     return;
   }
   var html = '';
-  for (var i = 0; i < list.length; i++) {
-    var c = list[i];
+  for (var i = 0; i < _currentList.length; i++) {
+    var c = _currentList[i];
     var nbE = 0;
     for (var j = 0; j < entretiensData.length; j++) {
       if (entretiensData[j].collabId === c.id) nbE++;
     }
-    var color = 'av-' + (i % 5);
+    var colorIdx = 0;
+    for (var k = 0; k < collabsData.length; k++) {
+      if (collabsData[k].id === c.id) { colorIdx = k % 5; break; }
+    }
+    var color = 'av-' + colorIdx;
     var initial = (c.nom || '?').charAt(0).toUpperCase();
-    var idx = i;
     html += '<div class="collab-card">';
     html += '<div class="avatar ' + color + '">' + initial + '</div>';
-    html += '<div class="collab-card-body" onclick="openDetailByIndex(' + idx + ')">';
+    html += '<div class="collab-card-body" onclick="openDetail('' + c.id + '')">';
     html += '<div class="collab-name">' + c.nom + '</div>';
     html += '<div class="collab-meta">' + (c.poste || '') + ' · ' + (c.equipe || '') + ' · ' + nbE + ' entretien' + (nbE > 1 ? 's' : '') + '</div>';
     html += '</div>';
     html += '<div class="collab-actions">';
-    html += '<button class="btn-sm btn-bilan" onclick="genererBilanByIndex(' + idx + ')" title="Bilan">📊</button>';
-    html += '<button class="btn-sm btn-edit" onclick="ouvrirModifByIndex(' + idx + ')" title="Modifier">✏️</button>';
-    html += '<button class="btn-sm btn-delete" onclick="demanderSuppressionByIndex(' + idx + ')" title="Supprimer">🗑️</button>';
+    html += '<button class="btn-sm btn-bilan" onclick="genererBilan('' + c.id + '')" title="Bilan">📊</button>';
+    html += '<button class="btn-sm btn-edit" onclick="ouvrirModif('' + c.id + '')" title="Modifier">✏️</button>';
+    html += '<button class="btn-sm btn-delete" onclick="demanderSuppression('' + c.id + '')" title="Supprimer">🗑️</button>';
     html += '</div></div>';
   }
   grid.innerHTML = html;
@@ -454,11 +460,7 @@ function filterCollabs() {
   renderCollabs(filtered);
 }
 
-// ===== ACTIONS PAR INDEX =====
-function openDetailByIndex(i) { openDetail(collabsData[i].id); }
-function ouvrirModifByIndex(i) { ouvrirModif(collabsData[i].id); }
-function demanderSuppressionByIndex(i) { demanderSuppression(collabsData[i].id); }
-function genererBilanByIndex(i) { genererBilan(collabsData[i].id); }
+// ===== ACTIONS =====
 
 // ===== ALERTES =====
 function renderAlertes(alertes) {
