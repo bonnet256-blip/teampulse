@@ -482,24 +482,36 @@ function renderAlertes(alertes) {
     div.innerHTML = '<div class="loading">✅ Aucune alerte pour le moment</div>';
     return;
   }
-  var html = '';
+  div.innerHTML = '';
   for (var i = 0; i < alertes.length; i++) {
     var a = alertes[i];
     var cardClass = a.retard ? 'retard' : (a.type === 'anniversaire' ? 'success' : (a.type === 'action' ? 'info' : ''));
     var badge = a.retard ? '<span class="badge-retard">⚠️ En retard</span>' : (a.datePrevue ? '<span class="badge-date">📅 ' + a.datePrevue + '</span>' : '');
-    html += '<div class="alert-card ' + cardClass + '" id="alert-' + i + '">';
-    html += '<div class="alert-icon">' + a.icone + '</div>';
-    html += '<div style="flex:1"><div class="alert-title">' + a.titre + badge + '</div>';
-    html += '<div class="alert-desc">' + a.desc + '</div>';
+    
+    var card = document.createElement('div');
+    card.className = 'alert-card ' + cardClass;
+    card.id = 'alert-' + i;
+    
+    var inner = '<div class="alert-icon">' + a.icone + '</div>';
+    inner += '<div style="flex:1"><div class="alert-title">' + escHtml(a.titre) + badge + '</div>';
+    inner += '<div class="alert-desc">' + escHtml(a.desc) + '</div>';
     if (a.type === 'action') {
-      html += '<div class="alert-btns">';
-      html += '<button class="btn-done" onclick="actionFaite(' + i + ',\'' + a.collabId + '\')">✅ C\'est fait !</button>';
-      html += '<button class="btn-ko" onclick="actionKO(' + i + ',\'' + a.collabId + '\')">❌ Je ne ferai pas</button>';
-      html += '</div>';
+      inner += '<div class="alert-btns">';
+      inner += '<button class="btn-done" data-idx="' + i + '">✅ C'est fait !</button>';
+      inner += '<button class="btn-ko" data-idx="' + i + '">❌ Je ne ferai pas</button>';
+      inner += '</div>';
     }
-    html += '</div></div>';
+    inner += '</div>';
+    card.innerHTML = inner;
+    
+    if (a.type === 'action') {
+      (function(idx, collabId) {
+        card.querySelector('.btn-done').addEventListener('click', function(){ actionFaite(idx, collabId); });
+        card.querySelector('.btn-ko').addEventListener('click', function(){ actionKO(idx, collabId); });
+      })(i, a.collabId);
+    }
+    div.appendChild(card);
   }
-  div.innerHTML = html;
 }
 
 // ===== DETAIL =====
