@@ -559,30 +559,30 @@ async function sauvegarderModif() {
   const id = document.getElementById('edit-id').value;
   const nom = document.getElementById('edit-nom').value.trim();
   if (!nom) { showToast('⚠️ Nom requis'); return; }
-  const editNaissance = document.getElementById('edit-naissance').value.trim();
-  const editPerso = document.getElementById('edit-perso').value.trim();
-  let editInfosFinal = editPerso.replace(/🎂 Anniversaire : [^.]+\.?\s*/g, '').trim();
-  if (editNaissance) {
-    editInfosFinal = '🎂 Anniversaire : ' + editNaissance + (editInfosFinal ? '. ' + editInfosFinal : '');
+  try {
+    const editNaissance = document.getElementById('edit-naissance').value.trim();
+    const editPerso = document.getElementById('edit-perso').value.trim();
+    // Si infosPerso contient déjà l'anniversaire, on le remplace
+    let editInfosFinal = editPerso.replace(/🎂 Anniversaire : [^.]+\.?\s*/g, '').trim();
+    if (editNaissance) {
+      editInfosFinal = '🎂 Anniversaire : ' + editNaissance + (editInfosFinal ? '. ' + editInfosFinal : '');
+    }
+    await callScript('saveCollab', { data: {
+      id,
+      nom,
+      poste: document.getElementById('edit-poste').value,
+      anciennete: document.getElementById('edit-anciennete').value,
+      equipe: document.getElementById('edit-equipe').value,
+      dateNaissance: editNaissance,
+      infosPerso: editInfosFinal,
+      avatarInitiale: nom[0].toUpperCase(),
+    }});
+    closeModal();
+    showToast('✅ ' + nom + ' mis à jour !');
+    await loadAll();
+  } catch(e) {
+    showToast('❌ ' + e.message);
   }
-  const data = {
-    id, nom,
-    poste: document.getElementById('edit-poste').value,
-    anciennete: document.getElementById('edit-anciennete').value,
-    equipe: document.getElementById('edit-equipe').value,
-    dateNaissance: editNaissance,
-    infosPerso: editInfosFinal,
-    avatarInitiale: nom[0].toUpperCase(),
-  };
-  // Mise à jour immédiate
-  const idx = collabsData.findIndex(c => c.id === id);
-  if (idx >= 0) collabsData[idx] = { ...collabsData[idx], ...data };
-  renderCollabs(collabsData);
-  updateCollabSelect();
-  closeModal();
-  showToast('✅ ' + nom + ' mis à jour !');
-  // Synchro arrière-plan
-  callScript('saveCollab', { data }).then(() => loadAll()).catch(() => {});
 }
 
 // ============================================================
@@ -604,15 +604,18 @@ function closeConfirm() {
 
 async function confirmerSuppression() {
   if (!collabToDelete) return;
-  const id = collabToDelete;
-  // Suppression immédiate
-  collabsData = collabsData.filter(c => c.id !== id);
-  renderCollabs(collabsData);
-  updateCollabSelect();
-  closeConfirm();
-  showToast('🗑️ Collaborateur supprimé');
-  // Synchro arrière-plan
-  callScript('deleteCollab', { collabId: id }).then(() => loadAll()).catch(() => {});
+  try {
+    await callScript('deleteCollab', { collabId: collabToDelete });
+    closeConfirm();
+    showToast('🗑️ Collaborateur supprimé');
+    await loadAll();
+  } catch(e) {
+    // Suppression locale si le script ne supporte pas encore
+    collabsData = collabsData.filter(c => c.id !== collabToDelete);
+    renderCollabs(collabsData);
+    closeConfirm();
+    showToast('🗑️ Supprimé localement — pense à supprimer la ligne dans Google Sheets');
+  }
 }
 
 // ============================================================
@@ -685,30 +688,27 @@ async function saveEntretien() {
   const collabId = document.getElementById('form-collab').value;
   const contenu = document.getElementById('form-content').value;
   if (!collabId || !contenu) { showToast('⚠️ Collaborateur et notes requis'); return; }
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Enregistrement...';
   const collab = collabsData.find(c => c.id === collabId);
-  const newEntretien = {
-    id: 'E' + Date.now(),
-    collabId,
-    collabNom: collab?.nom || '',
-    date: document.getElementById('form-date').value,
-    contenu,
-    tags: selectedTags.join(','),
-    detailRetenir: document.getElementById('form-detail').value,
-    actionAFaire: document.getElementById('form-action').value,
-    actionDate: document.getElementById('form-action-date').value,
-  };
-  // Mise à jour immédiate
-  entretiensData.unshift(newEntretien);
-  showToast('✅ Entretien enregistré !');
-  document.getElementById('form-content').value = '';
-  document.getElementById('form-detail').value = '';
-  document.getElementById('form-action').value = '';
-  document.getElementById('form-action-date').value = '';
-  selectedTags = [];
-  document.querySelectorAll('.tag-btn.selected').forEach(b => b.classList.remove('selected'));
-  // Synchro arrière-plan
-  callScript('saveEntretien', { data: { ...newEntretien, tags: selectedTags } })
-    .then(() => loadAll()).catch(() => {});
+  try {
+    await callScript('saveEntretien', { data: {
+      collabId, collabNom: collab?.nom || '',
+      date: document.getElementById('form-date').value,
+      contenu, tags: selectedTags,
+      detailRetenir: document.getElementById('form-detail').value,
+      actionAFaire: document.getElementById('form-action').value,
+      actionDate: document.getElementById('form-action-date').value,
+    }});
+    showToast('✅ Entretien enregistré !');
+    document.getElementById('form-content').value = '';
+    document.getElementById('form-detail').value = '';
+    document.getElementById('form-action').value = '';
+    selectedTags = [];
+    document.querySelectorAll('.tag-btn.selected').forEach(b => b.classList.remove('selected'));
+    await loadAll();
+  } catch(e) { showToast('❌ ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 Enregistrer';
 }
 
 // ============================================================
@@ -717,30 +717,25 @@ async function saveEntretien() {
 async function ajouterCollab() {
   const nom = document.getElementById('nc-nom').value.trim();
   if (!nom) { showToast('⚠️ Nom requis'); return; }
-  const naissance = document.getElementById('nc-naissance').value.trim();
-  const perso = document.getElementById('nc-perso').value.trim();
-  const infosPersoFinal = naissance
-    ? '🎂 Anniversaire : ' + naissance + (perso ? '. ' + perso : '')
-    : perso;
-  const newCollab = {
-    id: 'C' + Date.now(),
-    nom,
-    poste: document.getElementById('nc-poste').value,
-    anciennete: document.getElementById('nc-anciennete').value,
-    equipe: document.getElementById('nc-equipe').value,
-    dateNaissance: naissance,
-    infosPerso: infosPersoFinal,
-    avatarInitiale: nom[0].toUpperCase(),
-  };
-  // Mise à jour immédiate
-  collabsData.push(newCollab);
-  renderCollabs(collabsData);
-  updateCollabSelect();
-  showToast('✅ ' + nom + ' ajouté !');
-  ['nc-nom','nc-poste','nc-anciennete','nc-naissance','nc-perso'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('nc-equipe').value = '';
-  // Synchro arrière-plan
-  callScript('saveCollab', { data: newCollab }).then(() => loadAll()).catch(() => {});
+  try {
+    const naissance = document.getElementById('nc-naissance').value.trim();
+    const perso = document.getElementById('nc-perso').value.trim();
+    const infosPersoFinal = naissance
+      ? '🎂 Anniversaire : ' + naissance + (perso ? '. ' + perso : '')
+      : perso;
+    await callScript('saveCollab', { data: {
+      nom,
+      poste: document.getElementById('nc-poste').value,
+      anciennete: document.getElementById('nc-anciennete').value,
+      equipe: document.getElementById('nc-equipe').value,
+      dateNaissance: naissance,
+      infosPerso: infosPersoFinal,
+      avatarInitiale: nom[0].toUpperCase(),
+    }});
+    showToast('✅ ' + nom + ' ajouté !');
+    ['nc-nom','nc-poste','nc-anciennete','nc-naissance','nc-perso'].forEach(id => document.getElementById(id).value = '');
+    await loadAll();
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 // ============================================================
@@ -1018,23 +1013,22 @@ function toggleEditTag(btn, tag) {
 async function sauvegarderEntretien() {
   const id = document.getElementById('edit-entretien-id').value;
   const collabId = document.getElementById('edit-entretien-collab-id').value;
-  const data = {
-    id, collabId,
-    date: document.getElementById('edit-entretien-date').value,
-    contenu: document.getElementById('edit-entretien-contenu').value,
-    tags: selectedEditTags,
-    detailRetenir: document.getElementById('edit-entretien-detail').value,
-    actionAFaire: document.getElementById('edit-entretien-action').value,
-    actionDate: document.getElementById('edit-entretien-action-date').value,
-  };
-  // Mise à jour immédiate dans le cache local
-  const idx = entretiensData.findIndex(e => e.id === id);
-  if (idx >= 0) entretiensData[idx] = { ...entretiensData[idx], ...data, tags: selectedEditTags.join(',') };
-  closeModalEntretien();
-  showToast('✅ Entretien mis à jour !');
-  renderDetailTimeline();
-  // Synchro arrière-plan
-  callScript('updateEntretien', { data }).then(() => loadAll()).catch(() => {});
+  try {
+    await callScript('updateEntretien', { data: {
+      id,
+      collabId,
+      date: document.getElementById('edit-entretien-date').value,
+      contenu: document.getElementById('edit-entretien-contenu').value,
+      tags: selectedEditTags,
+      detailRetenir: document.getElementById('edit-entretien-detail').value,
+      actionAFaire: document.getElementById('edit-entretien-action').value,
+      actionDate: document.getElementById('edit-entretien-action-date').value,
+    }});
+    closeModalEntretien();
+    showToast('✅ Entretien mis à jour !');
+    await loadAll();
+    openDetail(collabId);
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 // ============================================================
