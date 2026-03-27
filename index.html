@@ -424,6 +424,7 @@ function escHtml(str) {
 function renderCollabs(list) {
   var grid = document.getElementById('collab-grid');
   _currentList = list || [];
+  _currentList = _currentList.slice().sort(function(a,b){ return (a.nom||'').localeCompare(b.nom||'','fr',{sensitivity:'base'}); });
   if (!_currentList.length) {
     grid.innerHTML = '<div class="loading">Aucun collaborateur.<br>Ajoute-en un dans ⚙️ Config</div>';
     return;
